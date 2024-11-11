@@ -1,0 +1,11 @@
+
+
+# Ignore environment variables and secrets
+.env
+*.env
+
+# Ignore virtual environment directory
+.myenv/
+myenv/
+
+

@@ -1,6 +1,6 @@
 from datetime import datetime
 from django.core.management.base import BaseCommand
-from core_app.models import LicenseOutput  # Adjust if necessary
+from core_app.models import LicenseOutput,LicenseNumber  # Adjust if necessary
 import csv
 
 
@@ -21,13 +21,14 @@ class Command(BaseCommand):
     help = 'Import License Output data from a CSV file'
 
     def handle(self, *args, **kwargs):
-        file_path = r"C:\Users\home\Videos\Files\regauravvatsandmichaelbrewer\regauravvatsandmichaelbrewer\Output License File from ABC and from Google - Step2.csv"  # Update with the correct file path
+        file_path = r"C:\Users\Exotica\Downloads\regauravvatsandmichaelbrewer\Output License File from ABC and from Google - Step2.csv"  # Update with the correct file path
 
         with open(file_path, mode='r', encoding='utf-8-sig') as file:
             reader = csv.DictReader(file)
             for row in reader:
                 try:
-                    license_number = int(row['License Number'])  # Convert License Number to integer
+                    license_number = LicenseNumber.objects.get(license_number=int(row['License Number']))
+                    license_number = license_number
                     primary_owner = row['Primary Owner']
                     office_of_application = row['Office of Application']
                     business_name = row['Business Name']
