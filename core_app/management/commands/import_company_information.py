@@ -6,7 +6,7 @@ class Command(BaseCommand):
     help = 'Import Company Information from a CSV file'
 
     def handle(self, *args, **kwargs):
-        file_path = r'C:\Users\Exotica\Downloads\regauravvatsandmichaelbrewer/Company Information from ABC - Officer name and Title_Role - Step 2.csv'
+        file_path = r'C:\Users\Exotica\Videos\abhishek\regauravvatsandmichaelbrewer/Company Information from ABC - Officer name and Title_Role - Step 2.csv'
 
         with open(file_path, mode='r', encoding='utf-8-sig') as file:
             reader = csv.DictReader(file)

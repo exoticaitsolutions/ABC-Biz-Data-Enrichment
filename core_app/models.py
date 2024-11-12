@@ -79,14 +79,13 @@ class AbcBizYelpRestaurantData(models.Model):
     yelp_name = models.CharField(max_length=200, blank=True, null=True)
     yelp_phone = models.CharField(max_length=20, blank=True, null=True)
     yelp_web_site = models.URLField(blank=True, null=True)
-    # yelp_rating = models.DecimalField(max_digits=3, decimal_places=2, blank=True, null=True)
     yelp_rating = models.CharField(max_length=200, blank=True, null=True)
 
     def __str__(self):
         return self.primary_name
-    # The error ValueError: Field 'id' expected a number but got 'CALIFORNIA BREAKFAST REPUBLIC' suggests that the file_number field in the Excel file has a value that is not a valid numeric ID for the LicenseNumber model. This is likely because file_number in your data is not the numeric ID (primary key) of LicenseNumber .
+
 class AgentsInformation(models.Model):
-    entity_name = models.CharField(max_length=200)
+    entity_name = models.CharField(max_length=200,blank=True, null=True)
     entity_num = models.CharField(max_length=100,blank=True, null=True)
     org_name = models.CharField(max_length=200,blank=True, null=True)
     first_name = models.CharField(max_length=100,blank=True, null=True)
@@ -152,6 +151,9 @@ class FilingsInformation(models.Model):
         return self.primary_name
     
 class PrincipalsInformation(models.Model):
+    entity_name = models.CharField(max_length=200,blank=True, null=True)
+    entity_num = models.CharField(max_length=100,blank=True, null=True)
+    org_name = models.CharField(max_length=200,blank=True, null=True)
     first_name = models.CharField(max_length=100,blank=True, null=True)
     middle_name = models.CharField(max_length=100, blank=True, null=True)
     last_name = models.CharField(max_length=100,blank=True, null=True)

@@ -21,7 +21,7 @@ class Command(BaseCommand):
     help = 'Import License Output data from a CSV file'
 
     def handle(self, *args, **kwargs):
-        file_path = r"C:\Users\Exotica\Downloads\regauravvatsandmichaelbrewer\Output License File from ABC and from Google - Step2.csv"  # Update with the correct file path
+        file_path = r"C:\Users\Exotica\Videos\abhishek\regauravvatsandmichaelbrewer\Output License File from ABC and from Google - Step2.csv"  # Update with the correct file path
 
         with open(file_path, mode='r', encoding='utf-8-sig') as file:
             reader = csv.DictReader(file)

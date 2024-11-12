@@ -1,6 +1,6 @@
 import pandas as pd
 from django.shortcuts import render
-from .models import LicenseNumber
+from .models import *
 
 def import_license_numbers(request):
     # Define the path to your CSV file
