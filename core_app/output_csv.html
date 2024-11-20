@@ -1,0 +1,14 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls %}
+
+{% block content %}
+<h1>{% trans "License Output" %}</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ output_csv_form.as_p }}
+    <button type="submit">{% trans "Import CSV" %}</button>
+</form>
+
+{{ block.super }}
+{% endblock %}

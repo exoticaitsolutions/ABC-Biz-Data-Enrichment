@@ -1,38 +1,65 @@
-import csv
+import openpyxl
 from django.core.management.base import BaseCommand
-from core_app.models import LicenseeNameDataEnrichment
-from openpyxl import load_workbook
+from core_app.models import LicenseeNameDataEnrichment, LicenseNumber
 
 class Command(BaseCommand):
-    help = 'Import Yelp restaurant data from an Excel file'
+    help = 'Import licensee name data enrichment from an Excel file'
 
-    def handle(self, *args, **options):
-        file_path = r"C:\Users\Exotica\Videos\abhishek\regauravvatsandmichaelbrewer\licensee name data enrcihment.xlsx"
+    def handle(self, *args, **kwargs):
+        # Specify the Excel file path
+        file_path = r'C:\Users\Exotica\Videos\abhishek\regauravvatsandmichaelbrewer\licensee name data enrcihment.xlsx'
         
-        wb = load_workbook(file_path)
-        sheet = wb.active# Skip the header row if present
-        for row in sheet.iter_rows(min_row=2, values_only=True):  # Skip header row
-            # Handle the data similarly as before
-            LicenseeNameDataEnrichment.objects.create(
-                license_number=row[0],
-                master=row[1],
-                name=row[2],
-                role=row[3],
-                licensee=row[4],
-                business_name=row[5],
-                website=row[6],
-                phone_number=row[7],
-                last_name=row[8],
-                first_name=row[9],
-                middle_name=row[10],
-                second_middle=row[11],
-                suffix=row[12],
-                full_name=row[13],
-                validated_work_email=row[14]
-            )
+        try:
+            # Load the Excel workbook
+            workbook = openpyxl.load_workbook(file_path)
+            sheet = workbook.active  # Get the active worksheet
 
-        self.stdout.write(self.style.SUCCESS('Data successfully imported into LicenseeNameDataEnrichment'))
+            # Iterate through rows, assuming the first row is the header
+            headers = [cell.value for cell in sheet[1]]  # Read the first row as headers
+            
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                data = dict(zip(headers, row))  # Map headers to row values
 
+                # Handle ForeignKey: Get or create LicenseNumber object
+                license_number = None
+                if data.get('license_number'):
+                    license_number, _ = LicenseNumber.objects.get_or_create(
+                        license_number=data['License Number']
+                    )
+                
+                # Create or update LicenseeNameDataEnrichment object
+                enrichment, created = LicenseeNameDataEnrichment.objects.update_or_create(
+                    license_number=license_number,
+                    defaults={
+                        'master': data.get('Master', ''),
+                        'name': data.get('Name', ''),
+                        'role': data.get('Role', ''),
+                        'licensee': data.get('LICENSEE', ''),
+                        'business_name': data.get('Business Name', ''),
+                        'website': data.get('Website', ''),
+                        'phone_number': data.get('Phone Number', ''),
+                        'last_name': data.get('Last Name', ''),
+                        'first_name': data.get('First Name', ''),
+                        'middle_name': data.get('Middle Name', ''),
+                        'second_middle': data.get('2 Middle', ''),
+                        'suffix': data.get('Suffix', ''),
+                        'full_name': data.get('Full Name', ''),
+                        'validated_work_email': data.get('Validated Work Email', ''),
+                    }
+                )
+                
+                if created:
+                    self.stdout.write(self.style.SUCCESS(f"Created: {enrichment}"))
+                else:
+                    self.stdout.write(self.style.SUCCESS(f"Updated: {enrichment}"))
+
+        except FileNotFoundError:
+            self.stderr.write(self.style.ERROR(f"File not found: {file_path}"))
+        except Exception as e:
+            self.stderr.write(self.style.ERROR(f"Error: {str(e)}"))
+
+        
+        
         #         for row in csv_reader:
         #             # Utility function to handle empty values
         #             def safe_str(value):

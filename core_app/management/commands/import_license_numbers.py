@@ -7,7 +7,7 @@ class Command(BaseCommand):
     help = 'Import license numbers from a CSV file'
 
     def handle(self, *args, **kwargs):
-        file_path = r"C:\Users\Exotica\Downloads\regauravvatsandmichaelbrewer\License Numbers Sample - Input for Scraper - Input for Start #1.csv"
+        file_path = r"C:\Users\Exotica\Videos\abhishek\regauravvatsandmichaelbrewer\License Numbers Sample - Input for Scraper - Input for Start #1.csv"
 
         with open(file_path, mode='r') as file:
             csv_reader = csv.reader(file)

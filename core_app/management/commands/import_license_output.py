@@ -56,20 +56,9 @@ class Command(BaseCommand):
                     holds = row['Holds']
                     escrows = row['Escrows']
                     from_license_number = row['From License Number']
-
-                    # Convert transferred_on to proper date format
-                    # transferred_on_string = row['Transferred On']
                     transferred_on = convert_to_date(row['Transferred On'])
-                    # transferred_on = convert_to_date(transferred_on_string)
-                    # if transferred_on:
-                    #     # Convert the date to YYYY-MM-DD format string
-                    #     transferred_on = transferred_on.strftime('%Y-%m-%d')
-
-                    # Handle other fields
                     to_license_number = row['To License Number']
-                    # transferred_on2 = row['Transferred On2']
                     transferred_on2 = convert_to_date(row['Transferred On2'])
-                    
                     business_name_alt = row['Business Name']
                     business_address_alt = row['Business Address']
                     place_name = row[' Place Name']
