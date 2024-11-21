@@ -1,14 +1,13 @@
-import csv
-from datetime import datetime, date
-import json  # Ensure correct imports
+from datetime import datetime
 from django.contrib import admin
 from django.urls import path
 from core_app.models import LicenseOutput, AbcBizYelpRestaurantData, LicenseNumber
-from merge_data.models import BusinessLicense,CombinedInformation
+# from merge_data.helper import CustomMergeAdminMixin, dynamic_like_query, get_or_create_instance
+from merge_data.helper import CustomMergeAdminMixin
+from merge_data.models import BusinessLicense,CombinedInformation, DataEnrichment
 from django.contrib import messages
-  # Import BusinessLicense from app2
 from django.template.response import TemplateResponse
-from core_app.models import AgentsInformation, FilingsInformation, LicenseeNameDataEnrichment,PrincipalsInformation
+from core_app.models import AgentsInformation, FilingsInformation, PrincipalsInformation
 
 # AbcBizYelpRestaurantData.objects.all().delete()
 def parse_date(value):
@@ -33,21 +32,22 @@ def parse_date(value):
         return None
 
 def safe_parse_date(date_str):
-    # Check if the date string is valid
+    """
+    Safely parses a date string in the format "%d-%b-%y" (e.g. "01-Jan-23") into a datetime.date object.
+    If the input string is not a valid date, or is None, this function will return None.
+    """
     if date_str:
         try:
-            # Assuming date_str is in the format "%d-%b-%y", e.g., "01-Jan-21"
             return datetime.strptime(date_str, "%d-%b-%y").strftime("%Y-%m-%d")
         except ValueError:
-            return None  # Or use a default value if the date format is incorrect
-    return None  # Return None if the date_str is None or empty    
+            return None 
+    return None    
 
 @admin.register(BusinessLicense)
 class BusinessLicenseAdmin(admin.ModelAdmin):
     actions = ["merge_and_import_data_action"]
     list_display = (
         "license_number","primary_owner","office_of_application",  "business_status", "county","license_type","license_type_status","term","fee_code","conditions",
-        # "operating_restrictions",
         "disciplinary_action","place_name","phone_number", "rating","files_name","primary_name","dba_name","prem_addr_1","yelp_link","yelp_name","yelp_website","prem_city" )  
 
     def merge_data(self, request):
@@ -56,7 +56,6 @@ class BusinessLicenseAdmin(admin.ModelAdmin):
         for data in license_number_data:
             license_output = LicenseOutput.objects.filter(license_number=data.id).first()
             yelp_output = AbcBizYelpRestaurantData.objects.filter(file_number=data.id).first()
-
             try:
                 # Try to get an existing BusinessLicense
                 business_license = BusinessLicense.objects.get(license_number=str(data.license_number))
@@ -65,10 +64,8 @@ class BusinessLicenseAdmin(admin.ModelAdmin):
                 # If not found, create a new one
                 business_license = BusinessLicense(license_number=str(data.license_number))
                 found = False
-
             # Update or set fields for BusinessLicense from LicenseOutput
             if license_output:
-                print('license_output ke pass chal gya h')
                 business_license.primary_owner = license_output.primary_owner
                 business_license.office_of_application = license_output.office_of_application
                 business_license.business_name = license_output.business_name
@@ -82,6 +79,7 @@ class BusinessLicenseAdmin(admin.ModelAdmin):
                 business_license.expiration_date = safe_parse_date(license_output.expiration_date)
                 business_license.master = license_output.master
                 business_license.fee_code = license_output.fee_code
+                business_license.licensee = license_output.licensee
                 business_license.transfers = True if license_output.transfers else False
                 business_license.conditions = license_output.conditions
                 business_license.operating_restrictions = license_output.operating_restrictions
@@ -99,10 +97,8 @@ class BusinessLicenseAdmin(admin.ModelAdmin):
                 business_license.types = license_output.types
                 business_license.business_status = license_output.business_status
                 business_license.output_lincense_file_status = True
-
             # Update or set fields for BusinessLicense from YelpOutput
             if yelp_output:
-                print('yelp_output ke pass chal gya h')
                 business_license.primary_name = yelp_output.primary_name
                 business_license.dba_name = yelp_output.dba_name
                 business_license.prem_addr_1 = yelp_output.prem_addr_1
@@ -115,13 +111,10 @@ class BusinessLicenseAdmin(admin.ModelAdmin):
                 business_license.yelp_phone = yelp_output.yelp_phone
                 business_license.yelp_website = yelp_output.yelp_web_site
                 business_license.yelp_file_status = True
-            # Save the business_license object after updating/creating
             business_license.save()
-
             action = "Updated" if found else "Created"
             print(f"{action} BusinessLicense for license_number: {business_license.license_number}")
             print(f"{action} BusinessLicense for Yelp data: {yelp_output}")
-
         self.message_user(request, "Data imported successfully!", messages.SUCCESS)
 
         # Prepare context for the template
@@ -150,7 +143,6 @@ class BusinessLicenseAdmin(admin.ModelAdmin):
         extra_context['merge_data_url'] = 'admin:merge_data'
         return super().changelist_view(request, extra_context=extra_context)
 
-
 @admin.register(CombinedInformation)
 class CombinedInformationAdmin(admin.ModelAdmin):
     actions = ["merge_and_import_data_action"]
@@ -159,13 +151,6 @@ class CombinedInformationAdmin(admin.ModelAdmin):
 
     def merge_data(self, request):
         licensee_enrichment_data = PrincipalsInformation.objects.all()
-        context = {
-            **self.admin_site.each_context(request),
-            "opts": self.model._meta,
-        }
-
-        
-        
         for singledata in licensee_enrichment_data:
             try:
                 # Try to get an existing BusinessLicense
@@ -181,7 +166,6 @@ class CombinedInformationAdmin(admin.ModelAdmin):
             print('agent_informations', agent_informations)
             print('filings_information', agent_informations)
             if agent_informations:
-                print('agent_informations s aa gya h ')
                 combined_information.entity_name = agent_informations.entity_name
                 combined_information.org_name = agent_informations.org_name
                 combined_information.first_name = agent_informations.first_name
@@ -196,8 +180,7 @@ class CombinedInformationAdmin(admin.ModelAdmin):
                 combined_information.physical_postal_code = agent_informations.physical_postal_code
                 combined_information.agent_type = agent_informations.agent_type
                 combined_information.agent_file_status = True
-            if filings_information:
-                print('filings_information s aa gya h ') 
+            if filings_information: 
                 combined_information.license_type = filings_information.license_type
                 combined_information.file_number = filings_information.file_number
                 combined_information.lic_or_app = filings_information.lic_or_app
@@ -247,7 +230,6 @@ class CombinedInformationAdmin(admin.ModelAdmin):
             combined_information.principal_file_status = True
             combined_information.save()
             action = "Updated" if found else "Created"
-            # break
         self.message_user(request, "Data imported successfully!", messages.SUCCESS)
         # Prepare context for the template
         context = {
@@ -269,11 +251,175 @@ class CombinedInformationAdmin(admin.ModelAdmin):
             path("informations_data/", self.merge_data, name="informations_data"),
         ]
         return custom_urls + urls
-
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
         extra_context['informations_data_url'] = 'admin:informations_data'
         return super().changelist_view(request, extra_context=extra_context)
 
 
+@admin.register(DataEnrichment)
+class DataEnrichmentAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
+    actions = ["merge_and_import_data_action"]
+    list_display = ("entity_name", "entity_num", "first_name", "license_type")
+    merge_url_name = "enrichment_data"
+    def get_merge_view(self):
+        """
+        Subclass-specific view for handling the merge logic.
+        """
+        def merge_view(request):
+            # businesslicense_data = BusinessLicense.objects.all()
+            businesslicense_data = BusinessLicense.objects.filter(output_lincense_file_status=True)
+            for singledata in businesslicense_data:
+                print("singledata.entity_name", singledata.license_number)
+                try:
+                    # Try to get an existing DataEnrichment record
+                    dataenrichmentinformation = DataEnrichment.objects.get(entity_name=str(singledata.licensee))
+                    found = True  # Object was found
+                except DataEnrichment.DoesNotExist:
+                    # If not found, create a new DataEnrichment instance
+                    dataenrichmentinformation = DataEnrichment(entity_name=str(singledata.licensee))  # Or any other required fields
+                    found = False  # Object was not found, so we're creating a new one
+                combinedinformation = CombinedInformation.objects.filter(entity_name__icontains=str(singledata.licensee)).first()
+                if combinedinformation:
+                    dataenrichmentinformation.entity_num = combinedinformation.entity_num
+                    dataenrichmentinformation.org_name = combinedinformation.org_name
+                    dataenrichmentinformation.first_name = combinedinformation.first_name
+                    dataenrichmentinformation.middle_name = combinedinformation.middle_name
+                    dataenrichmentinformation.last_name = combinedinformation.last_name
+                    dataenrichmentinformation.physical_address1 = combinedinformation.physical_address1
+                    dataenrichmentinformation.physical_address2 = combinedinformation.physical_address2
+                    dataenrichmentinformation.physical_address3 = combinedinformation.physical_address3
+                    dataenrichmentinformation.physical_city = combinedinformation.physical_city
+                    dataenrichmentinformation.physical_state = combinedinformation.physical_state
+                    dataenrichmentinformation.physical_country = combinedinformation.physical_country
+                    dataenrichmentinformation.physical_postal_code = combinedinformation.physical_postal_code
+                    dataenrichmentinformation.agent_type = combinedinformation.agent_type
+                    dataenrichmentinformation.license_type = combinedinformation.license_type
+                    dataenrichmentinformation.file_number = combinedinformation.file_number
+                    dataenrichmentinformation.lic_or_app = combinedinformation.lic_or_app
+                    dataenrichmentinformation.type_status = combinedinformation.type_status
+                    dataenrichmentinformation.type_orig_iss_date = combinedinformation.type_orig_iss_date
+                    dataenrichmentinformation.expir_date = combinedinformation.expir_date
+                    dataenrichmentinformation.fee_codes = combinedinformation.fee_codes
+                    dataenrichmentinformation.dup_counts = combinedinformation.dup_counts
+                    dataenrichmentinformation.master_ind = combinedinformation.master_ind
+                    dataenrichmentinformation.term_in_number_of_months = combinedinformation.term_in_number_of_months
+                    dataenrichmentinformation.geo_code = combinedinformation.geo_code
+                    dataenrichmentinformation.district = combinedinformation.district
+                    dataenrichmentinformation.primary_name = combinedinformation.primary_name
+                    dataenrichmentinformation.prem_addr_1 = combinedinformation.prem_addr_1
+                    dataenrichmentinformation.prem_addr_2 = combinedinformation.prem_addr_2
+                    dataenrichmentinformation.prem_city = combinedinformation.prem_city
+                    dataenrichmentinformation.prem_state = combinedinformation.prem_state
+                    dataenrichmentinformation.prem_zip = combinedinformation.prem_zip
+                    dataenrichmentinformation.dba_name = combinedinformation.dba_name
+                    dataenrichmentinformation.mail_addr_1 = combinedinformation.mail_addr_1
+                    dataenrichmentinformation.mail_addr_2 = combinedinformation.mail_addr_2
+                    dataenrichmentinformation.mail_city = combinedinformation.mail_city
+                    dataenrichmentinformation.mail_state = combinedinformation.mail_state
+                    dataenrichmentinformation.mail_zip = combinedinformation.mail_zip
+                    dataenrichmentinformation.prem_county = combinedinformation.prem_county
+                    dataenrichmentinformation.prem_census_tract = combinedinformation.prem_census_tract
+                    dataenrichmentinformation.initial_filing_date = combinedinformation.initial_filing_date
+                    dataenrichmentinformation.jurisdiction = combinedinformation.jurisdiction
+                    dataenrichmentinformation.entity_status = combinedinformation.entity_status
+                    dataenrichmentinformation.standing_sos = combinedinformation.standing_sos
+                    dataenrichmentinformation.entity_type = combinedinformation.entity_type
+                    dataenrichmentinformation.filing_type = combinedinformation.filing_type
+                    dataenrichmentinformation.foreign_name = combinedinformation.foreign_name
+                    dataenrichmentinformation.standing_ftb = combinedinformation.standing_ftb
+                    dataenrichmentinformation.standing_vcfcf = combinedinformation.standing_vcfcf
+                    dataenrichmentinformation.standing_agent = combinedinformation.standing_agent
+                    dataenrichmentinformation.suspension_date = combinedinformation.suspension_date
+                    dataenrichmentinformation.last_si_file_number = combinedinformation.last_si_file_number
+                    dataenrichmentinformation.last_si_file_date = combinedinformation.last_si_file_date
+                    dataenrichmentinformation.llc_management_structure = combinedinformation.llc_management_structure
+                    dataenrichmentinformation.type_of_business = combinedinformation.type_of_business
+                    dataenrichmentinformation.address1 = combinedinformation.address1
+                    dataenrichmentinformation.address2 = combinedinformation.address2
+                    dataenrichmentinformation.address3 = combinedinformation.address3
+                    dataenrichmentinformation.city = combinedinformation.city
+                    dataenrichmentinformation.state = combinedinformation.state
+                    dataenrichmentinformation.country = combinedinformation.country
+                    dataenrichmentinformation.position_1 = combinedinformation.position_1
+                    dataenrichmentinformation.position_2 = combinedinformation.position_2
+                    dataenrichmentinformation.position_3 = combinedinformation.position_3
+                    dataenrichmentinformation.position_4 = combinedinformation.position_4
+                    dataenrichmentinformation.position_5 = combinedinformation.position_5
+                    dataenrichmentinformation.position_6 = combinedinformation.position_6
+                    dataenrichmentinformation.position_7 = combinedinformation.position_7
+                    dataenrichmentinformation.postal_code = combinedinformation.postal_code
+                    dataenrichmentinformation.principal_address = combinedinformation.principal_address
+                    dataenrichmentinformation.principal_address2 = combinedinformation.last_name
+                    dataenrichmentinformation.principal_city = combinedinformation.principal_city
+                    dataenrichmentinformation.principal_state = combinedinformation.principal_state
+                    dataenrichmentinformation.principal_country = combinedinformation.principal_country
+                    dataenrichmentinformation.principal_postal_code = combinedinformation.principal_postal_code
+                    dataenrichmentinformation.principal_address_in_ca = combinedinformation.principal_address_in_ca
+                    dataenrichmentinformation.principal_address2_in_ca = combinedinformation.principal_address2_in_ca
+                    dataenrichmentinformation.principal_city_in_ca = combinedinformation.principal_city_in_ca
+                    dataenrichmentinformation.principal_state_in_ca = combinedinformation.principal_state_in_ca
+                    dataenrichmentinformation.principal_country_in_ca = combinedinformation.principal_country_in_ca
+                    dataenrichmentinformation.principal_postal_code_in_ca = combinedinformation.principal_postal_code_in_ca
+                    dataenrichmentinformation.filling_file_status = combinedinformation.filling_file_status
+                    dataenrichmentinformation.principal_file_status = combinedinformation.principal_file_status
+                    dataenrichmentinformation.agent_file_status = combinedinformation.agent_file_status
+                    dataenrichmentinformation.combine_information_filed_status = True
+                dataenrichmentinformation.license_number = singledata.license_number
+                dataenrichmentinformation.primary_owner = singledata.primary_owner    
+                dataenrichmentinformation.office_of_application = singledata.office_of_application    
+                dataenrichmentinformation.business_name = singledata.business_name    
+                dataenrichmentinformation.business_address = singledata.business_address    
+                dataenrichmentinformation.county = singledata.county    
+                dataenrichmentinformation.census_tract = singledata.census_tract    
+                dataenrichmentinformation.licensee = singledata.licensee    
+                dataenrichmentinformation.license_type = singledata.license_type    
+                dataenrichmentinformation.license_type_status = singledata.license_type_status    
+                dataenrichmentinformation.status_date = singledata.status_date    
+                dataenrichmentinformation.term = singledata.term    
+                dataenrichmentinformation.original_issue_date = singledata.original_issue_date    
+                dataenrichmentinformation.expiration_date = singledata.expiration_date    
+                dataenrichmentinformation.master = singledata.master    
+                dataenrichmentinformation.duplicate = singledata.duplicate    
+                dataenrichmentinformation.fee_code = singledata.fee_code    
+                dataenrichmentinformation.transfers = singledata.transfers    
+                dataenrichmentinformation.conditions = singledata.conditions    
+                dataenrichmentinformation.operating_restrictions = singledata.operating_restrictions    
+                dataenrichmentinformation.disciplinary_action = singledata.disciplinary_action    
+                dataenrichmentinformation.disciplinary_history = singledata.disciplinary_history    
+                dataenrichmentinformation.holds = singledata.holds    
+                dataenrichmentinformation.escrows = singledata.escrows    
+                dataenrichmentinformation.to_license_number = singledata.to_license_number    
+                dataenrichmentinformation.transferred_on2 = singledata.transferred_on2    
+                dataenrichmentinformation.business_name_secondary = singledata.business_name_secondary    
+                dataenrichmentinformation.business_address_secondary = singledata.business_address_secondary    
+                dataenrichmentinformation.place_name = singledata.place_name    
+                dataenrichmentinformation.rating = singledata.rating    
+                dataenrichmentinformation.phone_number = singledata.phone_number    
+                dataenrichmentinformation.website = singledata.website    
+                dataenrichmentinformation.types = singledata.types    
+                dataenrichmentinformation.business_status = singledata.business_status    
+                dataenrichmentinformation.license_type_secondary = singledata.license_type_secondary    
+                dataenrichmentinformation.files_name = singledata.files_name    
+                dataenrichmentinformation.primary_name = singledata.primary_name    
+                dataenrichmentinformation.prem_addr_1 = singledata.prem_addr_1    
+                dataenrichmentinformation.prem_addr_2 = singledata.prem_addr_2    
+                dataenrichmentinformation.prem_city = singledata.prem_city    
+                dataenrichmentinformation.prem_state = singledata.prem_state    
+                dataenrichmentinformation.prem_zip = singledata.prem_zip    
+                dataenrichmentinformation.yelp_link = singledata.yelp_link    
+                dataenrichmentinformation.yelp_phone = singledata.yelp_phone    
+                dataenrichmentinformation.yelp_website = singledata.yelp_website    
+                dataenrichmentinformation.yelp_rating = singledata.yelp_rating    
+                dataenrichmentinformation.output_lincense_file_status = singledata.output_lincense_file_status    
+                dataenrichmentinformation.business_License_field_status = True    
+                dataenrichmentinformation.save()
+            self.message_user(request, "Data imported successfully!", messages.SUCCESS)
+            context = {
+                **self.admin_site.each_context(request),
+                "opts": self.model._meta,
+            }
+            return TemplateResponse(request, "admin/merge_form.html", context)
+        return merge_view
+    
 

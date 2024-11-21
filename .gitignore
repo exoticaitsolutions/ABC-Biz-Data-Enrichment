@@ -142,3 +142,5 @@ GitHub.sublime-settings
 core_app/__pycache__/
 core_app/migrations/
 merge_data/migrations/
+data_enrichment/migrations/
+data_enrichment/__pycache__/

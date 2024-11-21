@@ -4,6 +4,8 @@ from urllib import request
 from django.shortcuts import render
 from django import forms
 from django.contrib import admin
+
+from merge_data.models import DataEnrichment
 from .models import *
 from django.contrib import messages
 from .forms import CSVImportForm
@@ -165,11 +167,10 @@ class CompanyInformationAdmin(admin.ModelAdmin):
         # Use the correct URL name 'admin:import_csv'
         extra_context['import_csv_url'] = 'admin:import_csv'
         return super().changelist_view(request, extra_context=extra_context)
-    
 
 @admin.register(LicenseOutput)
 class LicenseOutputAdmin(admin.ModelAdmin):
-    list_display = ("license_number", "business_name", "business_status")  # Adjust to your needs
+    list_display = ("license_number", "business_name", "business_status","licensee")  # Adjust to your needs
 
     def output_csv(self, request):
         if request.method == "POST":
@@ -574,7 +575,7 @@ class PrincipalsInformationAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 @admin.register(LicenseeNameDataEnrichment)
 class LicenseeNameDataEnrichmentAdmin(admin.ModelAdmin):
-    list_display = ("license_number", "name", "role", "last_name", "first_name")
+    list_display = ("license_number", "name", "role","licensee", "last_name", "first_name")
 
     def import_csv(self, request):
         """
@@ -637,3 +638,5 @@ class LicenseeNameDataEnrichmentAdmin(admin.ModelAdmin):
         extra_context["import_csv_url"] = "admin:licenseenamedataenrichment_import_csv"
         return super().changelist_view(request, extra_context=extra_context)
 
+
+    
