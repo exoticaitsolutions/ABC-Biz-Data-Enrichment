@@ -196,19 +196,6 @@ class PrincipalsInformation(models.Model):
     position_5 = models.CharField(max_length=100,blank=True, null=True)
     position_6 = models.CharField(max_length=100,blank=True, null=True)
     position_7 = models.CharField(max_length=100,blank=True, null=True)
-    # From Old CSV
-    # principal_address = models.CharField(max_length=200,blank=True, null=True)
-    # principal_address2 = models.CharField(max_length=200, blank=True, null=True)
-    # principal_city = models.CharField(max_length=100,blank=True, null=True)
-    # principal_state = models.CharField(max_length=50,blank=True, null=True)
-    # principal_country = models.CharField(max_length=50,blank=True, null=True)
-    # principal_postal_code = models.CharField(max_length=20,blank=True, null=True)
-    # principal_address_in_ca = models.CharField(max_length=200, blank=True, null=True)
-    # principal_address2_in_ca = models.CharField(max_length=200, blank=True, null=True)
-    # principal_city_in_ca = models.CharField(max_length=100, blank=True, null=True)
-    # principal_state_in_ca = models.CharField(max_length=50, blank=True, null=True)
-    # principal_country_in_ca = models.CharField(max_length=50, blank=True, null=True)
-    # principal_postal_code_in_ca = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
