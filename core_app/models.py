@@ -107,8 +107,6 @@ class LicenseeNameDataEnrichment(models.Model):
         return self.name
 class AgentsInformation(models.Model):
     entity_name =  models.CharField(max_length=200,blank=True, null=True)
-    # entity_num = models.ForeignKey(LicenseeNameDataEnrichment, on_delete=models.CASCADE, null=True, 
-    # blank=True)
     entity_num = models.CharField(max_length=100, blank=True, null=True)
     org_name = models.CharField(max_length=200,blank=True, null=True)
     first_name = models.CharField(max_length=100,blank=True, null=True)

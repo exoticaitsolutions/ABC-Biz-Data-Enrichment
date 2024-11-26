@@ -1,21 +1,24 @@
-import pandas as pd
+import logging
+import time
 import csv
-from urllib import request
-from django.shortcuts import render
 from django import forms
 from django.contrib import admin
-
-from merge_data.models import DataEnrichment
+from ABC_BizEnrichment.common.core_app.helper_function import CSVImportAdminMixin
+from ABC_BizEnrichment.common.helper_function import get_full_function_name
 from .models import *
 from django.contrib import messages
 from .forms import CSVImportForm
 from io import TextIOWrapper
 from django.urls import path
 from django.template.response import TemplateResponse
-from django.http import HttpResponse
-from django.http import HttpResponseRedirect
-import chardet
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+file_handler = logging.FileHandler(f"app_log_{datetime.now().strftime('%Y%m%d')}.log")
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logger.addHandler(file_handler)
+logger.addHandler(logging.StreamHandler())
+ 
  
 class CSVImportForm(forms.Form):
     csv_file = forms.FileField(label="Upload CSV File", required=True)
@@ -345,234 +348,208 @@ def get_or_create_entity_number(entity_number):
     except (ValueError, TypeError):
         return None
 @admin.register(AgentsInformation)
-class AgentsInformationAdmin(admin.ModelAdmin):
-    # list_display = ("entity_name", "entity_num", "first_name", "last_name", "physical_city", "agent_type")
+class AgentsInformationAdmin(CSVImportAdminMixin, admin.ModelAdmin):
     list_display = ("entity_name", "first_name", "last_name", "physical_city", "agent_type")
-    def import_csv(self, request):
-        """
-        Admin action to upload a CSV and import data into the AgentsInformation model.
-        """
-        if request.method == "POST":
-            form = CSVImportForm(request.POST, request.FILES)
-            if form.is_valid():
-                csv_file = TextIOWrapper(request.FILES["csv_file"].file, encoding="utf-8")
+    csv_import_url_name = "agentsinformation" 
+    def get_import_view(self):
+        def import_csv(request):
+            full_function_name = get_full_function_name()
+            if request.method == "POST":
+                csv_file = TextIOWrapper(request.FILES["csv_file"].file, encoding="utf-8", errors="replace")
                 reader = csv.DictReader(csv_file)
                 try:
-                    for row in reader:
-                        AgentsInformation.objects.create(
-                            entity_name = row['ENTITY_NAME'],
-                            # Testing 
-                            entity_num = row['ENTITY_NUM'],
-
-
-                            org_name = row['ORG_NAME'],
-                            first_name = row['FIRST_NAME'],
-                            middle_name = row['MIDDLE_NAME'],
-                            last_name = row['LAST_NAME'],
-                            physical_address1 = row['PHYSICAL_ADDRESS1'],
-                            physical_address2 = row['PHYSICAL_ADDRESS2'],
-                            physical_address3 = row['PHYSICAL_ADDRESS3'],
-                            physical_city = row['PHYSICAL_CITY'],
-                            physical_state = row['PHYSICAL_STATE'],
-                            physical_country = row['PHYSICAL_COUNTRY'],
-                            physical_postal_code = row['PHYSICAL_POSTAL_CODE'],
-                            agent_type = row['AGENT_TYPE'],
-                        ) 
-                        # break
+                    batch_size = 3000  # Number of rows to import at a time
+                    rows = list(reader)  # Convert to list for easy batching
+                    total_rows = len(rows)
+                    
+                    for i in range(0, total_rows, batch_size):
+                        batch = rows[i:i + batch_size]  # Get the current batch
+                        
+                        for row in batch:
+                            entity_num = row['ENTITY_NUM']
+                            try:
+                                # Always create a new record
+                                AgentsInformation.objects.create(
+                                    entity_num=entity_num,
+                                    entity_name=row['ENTITY_NAME'],
+                                    org_name=row['ORG_NAME'],
+                                    first_name=row['FIRST_NAME'],
+                                    middle_name=row['MIDDLE_NAME'],
+                                    last_name=row['LAST_NAME'],
+                                    physical_address1=row['PHYSICAL_ADDRESS1'],
+                                    physical_address2=row['PHYSICAL_ADDRESS2'],
+                                    physical_address3=row['PHYSICAL_ADDRESS3'],
+                                    physical_city=row['PHYSICAL_CITY'],
+                                    physical_state=row['PHYSICAL_STATE'],
+                                    physical_country=row['PHYSICAL_COUNTRY'],
+                                    physical_postal_code=row['PHYSICAL_POSTAL_CODE'],
+                                    agent_type=row['AGENT_TYPE'],
+                                )
+                                logger.info(f"{full_function_name}: Created new record with entity_num {entity_num}.")
+                            except Exception as e:
+                                logger.error(f"{full_function_name}: Error creating record for entity_num {entity_num}: {str(e)}")
+                        
+                        logger.info(f"{full_function_name}: Imported {len(batch)} records (batch {i // batch_size + 1}).")
+                        time.sleep(10)  # Wait 10 seconds before processing the next batch
+                    
+                    logger.info(f"{full_function_name}: CSV imported successfully!")
                     self.message_user(request, "CSV imported successfully!", messages.SUCCESS)
+                
                 except Exception as e:
+                    logger.error(f"{full_function_name}: Error importing CSV: {str(e)}")
                     self.message_user(request, f"Error importing CSV: {str(e)}", messages.ERROR)
-            else:
-                self.message_user(request, "Invalid CSV file!", messages.ERROR)
 
-        form = CSVImportForm()
-        context = {
-            **self.admin_site.each_context(request),
-            "opts": self.model._meta,
-            "form": form,
-        }
-        return TemplateResponse(request, "admin/csv_form.html", context)
-
-    import_csv.short_description = "Import CSV"
-
-    def get_urls(self):
-        """
-        Add a custom URL for the CSV import action.
-        """
-        urls = super().get_urls()
-        custom_urls = [
-            path("import-csv/", self.import_csv, name="agentsinformation_import_csv"),
-        ]
-        return custom_urls + urls
-
-    def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
-        extra_context["import_csv_url"] = "admin:agentsinformation_import_csv"
-        return super().changelist_view(request, extra_context=extra_context)
+            form = CSVImportForm()
+            context = {
+                **self.admin_site.each_context(request),
+                "opts": self.model._meta,
+                "form": form,
+            }
+            return TemplateResponse(request, "admin/csv_form.html", context)
+        return import_csv
+# FilingsInformationAdmin Start 
 @admin.register(FilingsInformation)
-class FilingsInformationAdmin(admin.ModelAdmin):
-    list_display = (
-        "primary_name", "license_type", "file_number", "type_status", "type_orig_iss_date",
-        "expir_date", "entity_status"
-    )  # Add more fields as needed
-    search_fields = ("primary_name", "file_number", "license_type")
-    list_filter = ("type_status", "entity_status", "prem_state")
-
-    def import_csv(self, request):
-        """
-        Admin action to upload a CSV and import data into the FilingsInformation model.
-        """
-        if request.method == "POST":
-            form = CSVImportForm(request.POST, request.FILES)
-            if form.is_valid():
-                csv_file = TextIOWrapper(request.FILES["csv_file"].file, encoding="utf-8")
+class FilingsInformationAdmin(CSVImportAdminMixin, admin.ModelAdmin):
+    list_display = ("file_number", "license_type", "type_status", "primary_name", "jurisdiction")
+    csv_import_url_name = "filingsinformation"
+    def get_import_view(self):
+        def import_csv(request):
+            full_function_name = get_full_function_name()
+            if request.method == "POST":
+                csv_file = TextIOWrapper(request.FILES["csv_file"].file, encoding="utf-8", errors="replace")
                 reader = csv.DictReader(csv_file)
                 try:
-                    for row in reader:
-                        FilingsInformation.objects.create(
-                            license_type=row['License_Type'],
-                            file_number=row['File_Number'],
-                            lic_or_app=row['Lic_or_App'],
-                            type_status=row['Type_Status'],
-                            type_orig_iss_date=safe_parse_date(row['Type_Orig_Iss_Date']),
-                            expir_date=safe_parse_date(row['Expir_Date']),
-                            fee_codes=row['Fee_Codes'],
-                            master_ind=row['Master_Ind'],
-                            term_in_number_of_months=row['Term_in_#_of_Months'],
-                            geo_code=row['Geo_Code'],
-                            district=row['District'],
-                            primary_name=row['Primary_Name'],
-                            prem_addr_1=row['Prem_Addr_1'],
-                            prem_addr_2=row['Prem_Addr_2'],
-                            prem_city=row['Prem_City'],
-                            prem_state=row['Prem_State'],
-                            prem_zip=row['Prem_Zip'],
-                            dba_name=row['DBA_Name'],
-                            mail_addr_1=row['Mail_Addr_1'],
-                            mail_addr_2=row['Mail_Addr_2'],
-                            mail_city=row['Mail_City'],
-                            mail_state=row['Mail_State'],
-                            mail_zip=row['Mail_Zip'],
-                            prem_county=row['Prem_County'],
-                            prem_census_tract=row['Prem_Census_Tract_#'],
-                            initial_filing_date=safe_parse_date(row['INITIAL_FILING_DATE']),
-                            jurisdiction=row['JURISDICTION'],
-                            entity_status=row['ENTITY_STATUS'],
-                            standing_sos=row['STANDING_SOS'],
-                            entity_type=row['ENTITY_TYPE'],
-                            filing_type=row['FILING_TYPE'],
-                            foreign_name=row['FOREIGN_NAME'],
-                            standing_ftb=row['STANDING_FTB'],
-                            standing_vcfcf=row['STANDING_VCFCF'],
-                            standing_agent=row['STANDING_AGENT'],
-                            # For testing 
-                            entity_num=row['ENTITY_NUM'],
-
-                            suspension_date=safe_parse_date(row['SUSPENSION_DATE']),
-                            last_si_file_number=row['LAST_SI_FILE_NUMBER'],
-                            last_si_file_date=safe_parse_date(row['LAST_SI_FILE_DATE']),
-                            llc_management_structure=row['LLC_MANAGEMENT_STRUCTURE'],
-                            type_of_business=row['TYPE_OF_BUSINESS']
-                        )
+                    batch_size = 10000  # Number of rows to import at a time
+                    rows = list(reader)  # Convert to list for easy batching
+                    total_rows = len(rows)
+                    
+                    for i in range(0, total_rows, batch_size):
+                        batch = rows[i:i + batch_size]  # Get the current batch
+                        for row in batch:
+                            file_number = row['File_Number']
+                            try:
+                                # Always create a new record
+                                FilingsInformation.objects.create(
+                                file_number=file_number,  # The unique identifier
+                                license_type=row['License_Type'],
+                                lic_or_app=row['Lic_or_App'],
+                                type_status=row['Type_Status'],
+                                type_orig_iss_date=safe_parse_date(row['Type_Orig_Iss_Date']),
+                                expir_date=safe_parse_date(row['Expir_Date']),
+                                fee_codes=row['Fee_Codes'],
+                                master_ind=row['Master_Ind'],
+                                term_in_number_of_months=row['Term_in_#_of_Months'],
+                                geo_code=row['Geo_Code'],
+                                district=row['District'],
+                                primary_name=row['Primary_Name'],
+                                prem_addr_1=row['Prem_Addr_1'],
+                                prem_addr_2=row['Prem_Addr_2'],
+                                prem_city=row['Prem_City'],
+                                prem_state=row['Prem_State'],
+                                prem_zip=row['Prem_Zip'],
+                                dba_name=row['DBA_Name'],
+                                mail_addr_1=row['Mail_Addr_1'],
+                                mail_addr_2=row['Mail_Addr_2'],
+                                mail_city=row['Mail_City'],
+                                mail_state=row['Mail_State'],
+                                mail_zip=row['Mail_Zip'],
+                                prem_county=row['Prem_County'],
+                                prem_census_tract=row['Prem_Census_Tract_#'],
+                                initial_filing_date=safe_parse_date(row['INITIAL_FILING_DATE']),
+                                jurisdiction=row['JURISDICTION'],
+                                entity_status=row['ENTITY_STATUS'],
+                                standing_sos=row['STANDING_SOS'],
+                                entity_type=row['ENTITY_TYPE'],
+                                filing_type=row['FILING_TYPE'],
+                                foreign_name=row['FOREIGN_NAME'],
+                                standing_ftb=row['STANDING_FTB'],
+                                standing_vcfcf=row['STANDING_VCFCF'],
+                                standing_agent=row['STANDING_AGENT'],
+                                entity_num=row['ENTITY_NUM'],
+                                suspension_date=safe_parse_date(row['SUSPENSION_DATE']),
+                                last_si_file_number=row['LAST_SI_FILE_NUMBER'],
+                                last_si_file_date=safe_parse_date(row['LAST_SI_FILE_DATE']),
+                                llc_management_structure=row['LLC_MANAGEMENT_STRUCTURE'],
+                                type_of_business=row['TYPE_OF_BUSINESS'],
+                            )
+                                logger.info(f"{full_function_name}: Created new record with file_number {file_number}.")
+                            except Exception as e:
+                                logger.error(f"{full_function_name}: Error creating record for file_number {file_number}: {str(e)}")
+                        
+                        logger.info(f"{full_function_name}: Imported {len(batch)} records (batch {i // batch_size + 1}).")
+                        time.sleep(10)  # Wait 10 seconds before processing the next batch
+                    
+                    logger.info(f"{full_function_name}: CSV imported successfully!")
                     self.message_user(request, "CSV imported successfully!", messages.SUCCESS)
                 except Exception as e:
+                    logger.error(f"{full_function_name}: Error importing CSV: {str(e)}")
                     self.message_user(request, f"Error importing CSV: {str(e)}", messages.ERROR)
-            else:
-                self.message_user(request, "Invalid CSV file!", messages.ERROR)
-
-        form = CSVImportForm()
-        context = {
-            **self.admin_site.each_context(request),
-            "opts": self.model._meta,
-            "form": form,
-        }
-        return TemplateResponse(request, "admin/csv_form.html", context)
-
-    import_csv.short_description = "Import CSV"
-
-    def get_urls(self):
-        """
-        Add a custom URL for the CSV import action.
-        """
-        urls = super().get_urls()
-        custom_urls = [
-            path("import-csv/", self.import_csv, name="filingsinformation_import_csv"),
-        ]
-        return custom_urls + urls
-
-    def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
-        extra_context["import_csv_url"] = "admin:filingsinformation_import_csv"
-        return super().changelist_view(request, extra_context=extra_context)
+            form = CSVImportForm()
+            context = {
+                **self.admin_site.each_context(request),
+                "opts": self.model._meta,
+                "form": form,
+            }
+            return TemplateResponse(request, "admin/csv_form.html", context)
+        return import_csv
 @admin.register(PrincipalsInformation)
-class PrincipalsInformationAdmin(admin.ModelAdmin):
+class PrincipalsInformationAdmin(CSVImportAdminMixin, admin.ModelAdmin):
     list_display = ("first_name", "last_name", "entity_name", "city", "state")
-
-    def import_csv(self, request):
-        """
-        Admin action to upload a CSV and import data into the PrincipalsInformation model.
-        """
-        if request.method == "POST":
-            form = CSVImportForm(request.POST, request.FILES)
-            if form.is_valid():
-                csv_file = TextIOWrapper(request.FILES["csv_file"].file, encoding="utf-8")
+    csv_import_url_name = "principalsinformation" 
+    def get_import_view(self):
+        def import_csv(request):
+            full_function_name = get_full_function_name()
+            if request.method == "POST":
+                csv_file = TextIOWrapper(request.FILES["csv_file"].file, encoding="utf-8", errors="replace")
                 reader = csv.DictReader(csv_file)
                 try:
-                    for row in reader:
-                        PrincipalsInformation.objects.create(
-                            entity_name = row['ENTITY_NAME'],
-                            # For testing 
-                            entity_num = row['ENTITY_NUM'],
-
-                            org_name = row['ORG_NAME'],
-                            first_name = row['FIRST_NAME'],
-                            middle_name = row['MIDDLE_NAME'],
-                            last_name = row['LAST_NAME'],
-                            address1 = row['ADDRESS1'],
-                            address2 = row['ADDRESS2'],
-                            address3 = row['ADDRESS3'],
-                            city = row['CITY'],
-                            state = row['STATE'],
-                            country = row['COUNTRY'],
-                            postal_code = row['POSTAL_CODE'],
-                            position_1 = row['POSITION1'],
-                            position_2 = row['POSITION2'],
-                            position_3 = row['POSITION3'],
-                            position_4 = row['POSITION4'],
-                            position_5 = row['POSITION5'],
-                            position_6 = row['POSITION6'],
-                            position_7 = row['POSITION7'],
-                        )
+                    batch_size = 10000  # Number of rows to import at a time
+                    rows = list(reader)  # Convert to list for easy batching
+                    total_rows = len(rows)
+                    for i in range(0, total_rows, batch_size):
+                        batch = rows[i:i + batch_size]  # Get the current batch
+                        for row in batch:
+                            entity_num = row['ENTITY_NUM']
+                            try:
+                                PrincipalsInformation.objects.create(
+                                entity_name = row['ENTITY_NAME'],
+                                entity_num = entity_num,
+                                org_name = row['ORG_NAME'],
+                                first_name = row['FIRST_NAME'],
+                                middle_name = row['MIDDLE_NAME'],
+                                last_name = row['LAST_NAME'],
+                                address1 = row['ADDRESS1'],
+                                address2 = row['ADDRESS2'],
+                                address3 = row['ADDRESS3'],
+                                city = row['CITY'],
+                                state = row['STATE'],
+                                country = row['COUNTRY'],
+                                postal_code = row['POSTAL_CODE'],
+                                position_1 = row['POSITION1'],
+                                position_2 = row['POSITION2'],
+                                position_3 = row['POSITION3'],
+                                position_4 = row['POSITION4'],
+                                position_5 = row['POSITION5'],
+                                position_6 = row['POSITION6'],
+                                position_7 = row['POSITION7'])
+                                logger.info(f"{full_function_name}: Created new record with entity_num {entity_num}.")
+                            except Exception as e:
+                                logger.error(f"{full_function_name}: Error creating record for entity_num {entity_num}: {str(e)}")
+                        logger.info(f"{full_function_name}: Imported {len(batch)} records (batch {i // batch_size + 1}).")
+                        time.sleep(10)  # Wait 10 seconds before processing the next batch
+                    logger.info(f"{full_function_name}: CSV imported successfully!")
                     self.message_user(request, "CSV imported successfully!", messages.SUCCESS)
                 except Exception as e:
+                    logger.error(f"{full_function_name}: Error importing CSV: {str(e)}")
                     self.message_user(request, f"Error importing CSV: {str(e)}", messages.ERROR)
-            else:
-                self.message_user(request, "Invalid CSV file!", messages.ERROR)
-
-        form = CSVImportForm()
-        context = {
-            **self.admin_site.each_context(request),
-            "opts": self.model._meta,
-            "form": form,
-        }
-        return TemplateResponse(request, "admin/csv_form.html", context)
-
-    import_csv.short_description = "Import CSV"
-
-    def get_urls(self):
-        """
-        Add a custom URL for the CSV import action.
-        """
-        urls = super().get_urls()
-        custom_urls = [
-            path("import-csv/", self.import_csv, name="principalsinformation_import_csv"),
-        ]
-        return custom_urls + urls
-
-    def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
-        extra_context["import_csv_url"] = "admin:principalsinformation_import_csv"
-        return super().changelist_view(request, extra_context=extra_context)
+            form = CSVImportForm()
+            context = {
+                **self.admin_site.each_context(request),
+                "opts": self.model._meta,
+                "form": form,
+            }
+            return TemplateResponse(request, "admin/csv_form.html", context)
+        return import_csv
 @admin.register(LicenseeNameDataEnrichment)
 class LicenseeNameDataEnrichmentAdmin(admin.ModelAdmin):
     list_display = ("license_number", "name", "role","licensee", "last_name", "first_name")

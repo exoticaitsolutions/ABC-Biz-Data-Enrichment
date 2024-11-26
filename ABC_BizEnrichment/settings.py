@@ -9,12 +9,47 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
+from datetime import datetime
 from pathlib import Path
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+log_file_path = BASE_DIR / f"app_log_{datetime.now().strftime('%Y%m%d')}.log"
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': '%(asctime)s - %(levelname)s - %(message)s',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',  # Set the level to INFO, you can change it to DEBUG, ERROR, etc.
+            'class': 'logging.FileHandler',
+            'filename': log_file_path,  # Log file name dynamically based on current date
+            'formatter': 'default',
+        },
+        'console': {
+            'level': 'INFO',  # You can change the level here as well
+            'class': 'logging.StreamHandler',
+            'formatter': 'default',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],  # Use both file and console handlers
+            'level': 'INFO',  # Log level for the Django logger
+            'propagate': True,  # Propagate logs to the parent logger
+        },
+        # You can define other custom loggers here as well
+        '__name__': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -24,7 +59,7 @@ SECRET_KEY = "django-insecure-a$-vc5(avz1&-n)d5#$id6hekva_%bd-+*q$%xlp1ur(r!h1@t
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
+BATCH_SIZE = 10000
 ALLOWED_HOSTS = []
 
 
@@ -39,6 +74,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "core_app",
     "merge_data",
+    'django_extensions'
 ]
 
 MIDDLEWARE = [
