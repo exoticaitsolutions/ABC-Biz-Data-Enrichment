@@ -65,7 +65,7 @@ class BusinessLicense(models.Model):
 class CombinedInformation(models.Model):
     # Common Functions 
     entity_num = models.CharField(max_length=100, blank=True, null=True)
-    file_number = models.CharField(max_length=100)
+    file_number = models.CharField(max_length=100, blank=True, null=True)
     # Agent Infomation 
     entity_name =  models.CharField(max_length=200,blank=True, null=True)
     org_name = models.CharField(max_length=200,blank=True, null=True)
@@ -271,7 +271,6 @@ class DataEnrichment(models.Model):
     position_5 = models.CharField(max_length=100,blank=True, null=True)
     position_6 = models.CharField(max_length=100,blank=True, null=True)
     position_7 = models.CharField(max_length=100,blank=True, null=True)
-    # another fileld list 
     business_License_field_status  = models.BooleanField(default=False)
     combine_information_filed_status  = models.BooleanField(default=False)
     def __str__(self):

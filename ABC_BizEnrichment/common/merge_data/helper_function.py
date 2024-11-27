@@ -9,7 +9,6 @@ class CustomMergeAdminMixin:
         Add a custom URL for CSV import action.
         """
         urls = super().get_urls()
-        print('merge_url_name', self.merge_url_name)
         custom_urls = [
             path(
                 f"{self.merge_url_name}/", 
@@ -17,7 +16,6 @@ class CustomMergeAdminMixin:
                  name=self.merge_url_name),
         ]
         return custom_urls + urls
-
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
         extra_context[f'{self.merge_url_name}_url'] = f'admin:{self.merge_url_name}'
