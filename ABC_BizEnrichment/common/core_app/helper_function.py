@@ -56,16 +56,9 @@ def get_or_create_license_number(license_number):
         return license_number_obj
     except (ValueError, TypeError):
         return None
-    
-class CSVImportForm(forms.Form):
-    csv_file = forms.FileField(label="Upload CSV File", required=True)
-
-class BaseCSVImportAdmin(CSVImportAdminMixin,admin.ModelAdmin):
-    def process_csv_import(self, request, model_class, field_mappings):
-        full_function_name = get_full_function_name()
+def Remove_duplicate_license_numbers():
         # Step 1: Fetch all records from the LicenseOutput model
         records = LicenseOutput.objects.all()
-
         # Step 2: Identify duplicates based on license_number
         license_number_dict = defaultdict(list)
         for record in records:
@@ -112,6 +105,13 @@ class BaseCSVImportAdmin(CSVImportAdminMixin,admin.ModelAdmin):
                 writer.writerow([getattr(record, field.name) for field in LicenseOutput._meta.fields])
 
         print("Duplicate records have been deleted, and unique and duplicate records are saved to CSV files.")
+
+class CSVImportForm(forms.Form):
+    csv_file = forms.FileField(label="Upload CSV File", required=True)
+
+class BaseCSVImportAdmin(CSVImportAdminMixin,admin.ModelAdmin):
+    def process_csv_import(self, request, model_class, field_mappings):
+        full_function_name = get_full_function_name()
         if request.method != "POST":
             return return_response(request, "admin/csv_form.html", 
                                 context={"opts": self.model._meta, 
@@ -142,3 +142,4 @@ class BaseCSVImportAdmin(CSVImportAdminMixin,admin.ModelAdmin):
             logger.error(f"{full_function_name}: Error importing CSV: {str(e)}")
             self.message_user(request, f"Error importing CSV: {str(e)}", messages.ERROR)
             return None
+        
