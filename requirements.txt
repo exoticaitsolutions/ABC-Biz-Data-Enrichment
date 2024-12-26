@@ -1,0 +1,6 @@
+
+Django
+numpy
+pandas
+django-extensions
+django-import-export
