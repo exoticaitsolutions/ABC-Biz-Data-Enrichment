@@ -16,6 +16,7 @@ from django.http import HttpResponseRedirect
 # Logging setup
 from core_app.models import LicenseOutput
 from collections import defaultdict
+from import_export.admin import ExportMixin, ImportExportModelAdmin
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -112,6 +113,7 @@ class CSVImportForm(forms.Form):
 class BaseCSVImportAdmin(CSVImportAdminMixin,admin.ModelAdmin):
     def process_csv_import(self, request, model_class, field_mappings):
         full_function_name = get_full_function_name()
+        
         if request.method != "POST":
             return return_response(request, "admin/csv_form.html", 
                                 context={"opts": self.model._meta, 

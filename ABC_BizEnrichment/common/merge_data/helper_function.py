@@ -1,4 +1,7 @@
 from django.urls import path
+from django.db.models import F, Func, Value
+from django.db.models.functions import Replace, Lower
+from merge_data.models import DataSet1Record, DataSet2Record
 class CustomMergeAdminMixin:
     """
     Mixin to handle custom merge URL routing and dynamic changelist context.
@@ -35,4 +38,81 @@ class CustomMergeAdminMixin:
         """
         raise NotImplementedError("Subclasses must define 'get_merge_view'.")
     
+def normalized_first_table():
+        return DataSet1Record.objects.annotate(
+            normalized_name=Lower(
+                Replace(
+                    Replace(
+                        Replace(
+                            Replace(
+                                Replace(
+                                    Replace(
+                                        F('licensee'),
+                                        Value('|'), Value('')
+                                    ),
+                                    Value(','), Value('')
+                                ),
+                                Value('.'), Value('')
+                            ),
+                            Value('/'), Value('')
+                        ),
+                        Value('&'), Value('')
+                    ),
+                    Value('-'), Value('')
+                )
+            )
+        )
+    
+# def Seach_Functionallty():
 
+
+def normalized_second_table():
+   return  DataSet2Record.objects.annotate(
+        normalized_name=Lower(
+            Replace(
+                Replace(
+                    Replace(
+                        Replace(
+                            Replace(
+                                Replace(
+                                    F('entity_name'),
+                                    Value('|'), Value('')
+                                ),
+                                Value(','), Value('')
+                            ),
+                            Value('.'), Value('')
+                        ),
+                        Value('/'), Value('')
+                    ),
+                    Value('&'), Value('')
+                ),
+                Value('-'), Value('')
+            )
+        )
+    )
+    
+
+#     normalized_second_table = DataSet2Record.objects.annotate(
+#         normalized_name=Lower(
+#             Replace(
+#                 Replace(
+#                     Replace(
+#                         Replace(
+#                             Replace(
+#                                 Replace(
+#                                     F('entity_name'),
+#                                     Value('|'), Value('')
+#                                 ),
+#                                 Value(','), Value('')
+#                             ),
+#                             Value('.'), Value('')
+#                         ),
+#                         Value('/'), Value('')
+#                     ),
+#                     Value('&'), Value('')
+#                 ),
+#                 Value('-'), Value('')
+#             )
+#         )
+#     )
+#     return normalized_first_table,normalized_second_table

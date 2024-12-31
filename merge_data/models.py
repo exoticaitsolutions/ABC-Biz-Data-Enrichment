@@ -1,5 +1,4 @@
 from django.db import models
-
 from core_app.models import LicenseNumber
 
 # from core_app.models import LicenseNumber
@@ -69,6 +68,208 @@ class DataSet2Record(models.Model):
     # Common FIleds
     entity_num = models.CharField(max_length=100, blank=True, null=True)
     entity_name = models.CharField(max_length=200,blank=True, null=True)
+    org_name = models.CharField(max_length=200,blank=True, null=True)
+    agent_information_org_name = models.CharField(max_length=200,blank=True, null=True)
+    agent_information_entity_name = models.CharField(max_length=200, blank=True, null=True)
+    agent_information_first_name = models.CharField(max_length=100,blank=True, null=True)
+    agent_information_middle_name = models.CharField(max_length=100, blank=True, null=True)
+    agent_information_last_name = models.CharField(max_length=100,blank=True, null=True)
+    # Filling Information Duplicate FIleds 
+    # entity_name 
+    principal_information_entity_name = models.CharField(max_length=200, blank=True, null=True)
+    # principal_address
+    filling_information_principal_address = models.CharField(max_length=200, blank=True, null=True)
+    principal_information_principal_address = models.CharField(max_length=200, blank=True, null=True)
+    # principal_address2 
+    filling_information_principal_address2 = models.CharField(max_length=200, blank=True, null=True)
+    principal_information_principal_address2 = models.CharField(max_length=200, blank=True, null=True)
+    # principal_city 
+    filling_information_principal_city = models.CharField(max_length=200, blank=True, null=True)
+    principal_information_principal_city = models.CharField(max_length=200, blank=True, null=True)
+    # principal_state 
+    filling_information_principal_state = models.CharField(max_length=30, blank=True, null=True)
+    principal_information_principal_state = models.CharField(max_length=30, blank=True, null=True)
+    # principal_country
+    filling_information_principal_country = models.CharField(max_length=30, blank=True, null=True)
+    principal_information_principal_country = models.CharField(max_length=30, blank=True, null=True)
+    # principal_postal_code
+    filling_information_principal_postal_code= models.CharField(max_length=30, blank=True, null=True)
+    principal_information_principal_postal_code= models.CharField(max_length=30, blank=True, null=True)
+    # principal_address_in_ca
+    filling_information_principal_address_in_ca= models.CharField(max_length=200, blank=True, null=True)
+    principal_information_principal_address_in_ca= models.CharField(max_length=200, blank=True, null=True)
+    # principal_address2_in_ca
+    filling_information_principal_address2_in_ca= models.CharField(max_length=200, blank=True, null=True)
+    principal_information_principal_address2_in_ca= models.CharField(max_length=200, blank=True, null=True)
+    # principal_city_in_ca
+    filling_information_principal_city_in_ca= models.CharField(max_length=200, blank=True, null=True)
+    principal_information_principal_city_in_ca= models.CharField(max_length=200, blank=True, null=True)
+    # principal_state_in_ca
+    filling_information_principal_state_in_ca= models.CharField(max_length=20, blank=True, null=True)
+    principal_information_principal_state_in_ca= models.CharField(max_length=20, blank=True, null=True)
+    # principal_country_in_ca
+    filling_information_principal_country_in_ca= models.CharField(max_length=20, blank=True, null=True)
+    principal_information_principal_country_in_ca= models.CharField(max_length=20, blank=True, null=True)
+    # principal_postal_code_in_ca
+    filling_information_principal_postal_code_in_ca= models.CharField(max_length=20, blank=True, null=True)
+    principal_information_principal_postal_code_in_ca= models.CharField(max_length=20, blank=True, null=True)
+    # Filling  Information Fileds 
+    license_type = models.CharField(max_length=15,blank=True, null=True)
+    file_number = models.CharField(max_length=100,blank=True, null=True)
+    lic_or_app = models.CharField(max_length=10,blank=True, null=True)
+    type_status = models.CharField(max_length=15,blank=True, null=True)
+    type_orig_iss_date = models.DateField(blank=True, null=True)
+    expir_date = models.DateField(blank=True, null=True)
+    fee_codes = models.CharField(max_length=4, blank=True, null=True)
+    dup_counts = models.CharField(max_length=4,blank=True, null=True)
+    master_ind = models.CharField(max_length=2,blank=True, null=True)
+    term_in_number_of_months = models.IntegerField(blank=True, null=True)
+    geo_code = models.CharField(max_length=10,blank=True, null=True)
+    district = models.CharField(max_length=10,blank=True, null=True)
+    primary_name = models.CharField(max_length=200,blank=True, null=True)
+    prem_addr_1 = models.CharField(max_length=200,blank=True, null=True)
+    prem_addr_2 = models.CharField(max_length=200, blank=True, null=True)
+    prem_city = models.CharField(max_length=100,blank=True, null=True)
+    prem_state = models.CharField(max_length=10,blank=True, null=True)
+    prem_zip = models.CharField(max_length=20,blank=True, null=True)
+    dba_name = models.CharField(max_length=200, blank=True, null=True)
+    mail_addr_1 = models.CharField(max_length=200,blank=True, null=True)
+    mail_addr_2 = models.CharField(max_length=200, blank=True, null=True)
+    mail_city = models.CharField(max_length=100,blank=True, null=True)
+    mail_state = models.CharField(max_length=50,blank=True, null=True)
+    mail_zip = models.CharField(max_length=20,blank=True, null=True)
+    prem_county = models.CharField(max_length=100, blank=True, null=True)
+    prem_census_tract = models.CharField(max_length=50, blank=True, null=True)
+    initial_filing_date = models.DateField(blank=True, null=True)
+    jurisdiction = models.CharField(max_length=60,blank=True, null=True)
+    entity_status = models.CharField( max_length=20,blank=True, null=True)
+    standing_sos = models.CharField( max_length=20,blank=True, null=True)
+    entity_type = models.CharField(max_length=100,blank=True, null=True)
+    filing_type = models.CharField(max_length=60,blank=True, null=True)
+    foreign_name = models.CharField(max_length=200, blank=True, null=True)
+    standing_ftb = models.CharField( max_length=20,blank=True, null=True)
+    standing_vcfcf = models.CharField(max_length=30,blank=True, null=True)
+    standing_agent = models.CharField(max_length=30,blank=True, null=True)
+    suspension_date = models.DateField(blank=True, null=True)
+    last_si_file_number = models.CharField(max_length=70, blank=True, null=True)
+    last_si_file_date = models.DateField(blank=True, null=True)
+    principal_state = models.CharField(max_length=30, blank=True, null=True)
+    principal_country = models.CharField(max_length=30, blank=True, null=True)
+    principal_postal_code= models.CharField(max_length=30, blank=True, null=True)
+    mailing_address= models.CharField(max_length=30, blank=True, null=True)
+    mailing_address2= models.CharField(max_length=30, blank=True, null=True)
+    mailing_address3= models.CharField(max_length=30, blank=True, null=True)
+    mailing_city= models.CharField(max_length=30, blank=True, null=True)
+    mailing_state= models.CharField(max_length=30, blank=True, null=True)
+    mailing_country= models.CharField(max_length=20, blank=True, null=True)
+    mailing_postal_code= models.CharField(max_length=20, blank=True, null=True)
+    llc_management_structure = models.CharField(max_length=100, blank=True, null=True)
+    type_of_business = models.CharField(max_length=200, blank=True, null=True)
+    # Principals Information Records 
+    first_name = models.CharField(max_length=100,blank=True, null=True)
+    middle_name = models.CharField(max_length=100, blank=True, null=True)
+    last_name = models.CharField(max_length=100,blank=True, null=True)
+    position_type = models.CharField(max_length=100,blank=True, null=True)
+    address1 = models.CharField(max_length=200,blank=True, null=True)
+    address2 = models.CharField(max_length=200, blank=True, null=True)
+    address3 = models.CharField(max_length=200, blank=True, null=True)
+    city = models.CharField(max_length=100,blank=True, null=True)
+    state = models.CharField(max_length=50,blank=True, null=True)
+    country = models.CharField(max_length=50,blank=True, null=True)
+    postal_code = models.CharField(max_length=20,blank=True, null=True)
+    position_1 = models.CharField(max_length=100,blank=True, null=True)
+    position_1 = models.CharField(max_length=100,blank=True, null=True)
+    position_2 = models.CharField(max_length=100,blank=True, null=True)
+    position_3 = models.CharField(max_length=100,blank=True, null=True)
+    position_4 = models.CharField(max_length=100,blank=True, null=True)
+    position_5 = models.CharField(max_length=100,blank=True, null=True)
+    position_6 = models.CharField(max_length=100,blank=True, null=True)
+    position_7 = models.CharField(max_length=100,blank=True, null=True)
+    position_8 = models.CharField(max_length=100,blank=True, null=True)
+    # Agents Information FIleds 
+    physical_address1 = models.CharField(max_length=200,blank=True, null=True)
+    physical_address2 = models.CharField(max_length=200, blank=True, null=True)
+    physical_address3 = models.CharField(max_length=200, blank=True, null=True)
+    physical_city = models.CharField(max_length=100,blank=True, null=True)
+    physical_state = models.CharField(max_length=50,blank=True, null=True)
+    physical_country = models.CharField(max_length=50,blank=True, null=True)
+    physical_postal_code = models.CharField(max_length=20,blank=True, null=True)
+    agent_type = models.CharField(max_length=100,blank=True, null=True)
+    # Additional Fields
+    filling_information_file_status = models.BooleanField(default=False)
+    principal_information_file_status = models.BooleanField(default=False)
+    agent_information_file_status = models.BooleanField(default=False)
+    def __str__(self):
+        return f"Generate Data Set2 Record for {self.entity_num}"
+    
+
+class DataErichment(models.Model):
+    licensee = models.CharField(max_length=100, blank=True, null=True)
+    entity_name = models.CharField(max_length=200,blank=True, null=True)
+    # Comm Fields founds 
+    # license_type
+    DataSet1Record_license_type = models.CharField(max_length=200,blank=True, null=True)
+    DataSet2Record_license_type = models.CharField(max_length=200, blank=True, null=True)
+    # file_number
+    DataSet1Record_file_number = models.CharField(max_length=200,blank=True, null=True)
+    DataSet2Record_file_number = models.CharField(max_length=200, blank=True, null=True)
+    # Fieds From Data Set 1
+    # Common Fields
+    # LicenseOutput Model Fields
+    license_number = models.CharField(max_length=255, null=True, blank=True)
+    primary_owner = models.CharField(max_length=255, null=True, blank=True)
+    office_of_application = models.CharField(max_length=255, null=True, blank=True)
+    business_name = models.CharField(max_length=255, null=True, blank=True)
+    business_address = models.CharField(max_length=255, null=True, blank=True)
+    county = models.CharField(max_length=100, null=True, blank=True)
+    census_tract = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    licensee = models.CharField(max_length=255, null=True, blank=True)
+    license_type_status = models.CharField(max_length=20, null=True, blank=True)
+    status_date = models.DateField(null=True, blank=True)
+    term = models.CharField(max_length=15, null=True, blank=True)
+    original_issue_date = models.DateField(null=True, blank=True)
+    expiration_date = models.DateField(null=True, blank=True)
+    master = models.CharField(max_length=2, null=True, blank=True)
+    duplicate = models.BooleanField(default=False, null=True, blank=True)
+    fee_code = models.CharField(max_length=50, null=True, blank=True)
+    transfers = models.CharField(max_length=5, null=True, blank=True)
+    conditions = models.TextField(null=True, blank=True, default="N/A")
+    operating_restrictions = models.TextField(null=True, blank=True)
+    disciplinary_action = models.TextField(null=True, blank=True, default="No Active Disciplinary Action found")
+    disciplinary_history = models.TextField(null=True, blank=True, default="No Disciplinary History found.")
+    holds = models.TextField(null=True, blank=True, default="No Active Holds found")
+    escrows = models.TextField(null=True, blank=True, default="No Escrow found")
+    from_license_number = models.CharField(max_length=20, null=True, blank=True)
+    transferred_on = models.DateField(null=True, blank=True)
+    to_license_number = models.CharField(max_length=20, null=True, blank=True)
+    transferred_on2 = models.DateField(null=True, blank=True)
+    business_name_alt = models.CharField(max_length=255, null=True, blank=True)
+    business_address_alt = models.CharField(max_length=255, null=True, blank=True)
+    place_name = models.CharField(max_length=255, null=True, blank=True)
+    rating = models.CharField(max_length=5, null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    website = models.URLField(null=True, blank=True)
+    types = models.TextField(max_length=255, null=True, blank=True)
+    business_status = models.CharField(max_length=100, null=True, blank=True)
+    # Yelp Fields
+    primary_name = models.CharField(max_length=200,blank=True, null=True)
+    dba_name = models.CharField(max_length=200,blank=True, null=True)
+    prem_addr_1 = models.CharField(max_length=200, blank=True, null=True)
+    prem_addr_2 = models.CharField(max_length=200, blank=True, null=True)
+    prem_city = models.CharField(max_length=100,blank=True, null=True)
+    prem_state = models.CharField(max_length=5,blank=True, null=True)
+    prem_zip = models.CharField(max_length=20,blank=True, null=True)  
+    yelp_link = models.URLField(blank=True, null=True)
+    yelp_name = models.CharField(max_length=200, blank=True, null=True)
+    yelp_phone = models.CharField(max_length=20, blank=True, null=True)
+    yelp_web_site = models.URLField(blank=True, null=True)
+    yelp_rating = models.CharField(max_length=5, blank=True, null=True)
+    # Additional Fields
+    output_license_file_status = models.BooleanField(default=False)
+    yelp_file_status = models.BooleanField(default=False)
+    # Fileds From Data Set 2
+     # Common FIleds
+    entity_num = models.CharField(max_length=100, blank=True, null=True)
     org_name = models.CharField(max_length=200,blank=True, null=True)
     agent_information_org_name = models.CharField(max_length=200,blank=True, null=True)
     agent_information_entity_name = models.CharField(max_length=200, blank=True, null=True)
@@ -164,7 +365,6 @@ class DataSet2Record(models.Model):
     llc_management_structure = models.CharField(max_length=100, blank=True, null=True)
     type_of_business = models.CharField(max_length=200, blank=True, null=True)
     # Principals Information Records 
-    
     first_name = models.CharField(max_length=100,blank=True, null=True)
     middle_name = models.CharField(max_length=100, blank=True, null=True)
     last_name = models.CharField(max_length=100,blank=True, null=True)
@@ -186,10 +386,9 @@ class DataSet2Record(models.Model):
     position_7 = models.CharField(max_length=100,blank=True, null=True)
     position_8 = models.CharField(max_length=100,blank=True, null=True)
     # Agents Information FIleds 
-    org_name = models.CharField(max_length=200,blank=True, null=True)
-    first_name = models.CharField(max_length=100,blank=True, null=True)
-    middle_name = models.CharField(max_length=100, blank=True, null=True)
-    last_name = models.CharField(max_length=100,blank=True, null=True)
+    agents_information_first_name = models.CharField(max_length=100,blank=True, null=True)
+    agents_information_middle_name = models.CharField(max_length=100, blank=True, null=True)
+    agents_information_last_name = models.CharField(max_length=100,blank=True, null=True)
     physical_address1 = models.CharField(max_length=200,blank=True, null=True)
     physical_address2 = models.CharField(max_length=200, blank=True, null=True)
     physical_address3 = models.CharField(max_length=200, blank=True, null=True)
@@ -202,6 +401,9 @@ class DataSet2Record(models.Model):
     filling_information_file_status = models.BooleanField(default=False)
     principal_information_file_status = models.BooleanField(default=False)
     agent_information_file_status = models.BooleanField(default=False)
+     # Additional Fields
+    data_set_1_file_status = models.BooleanField(default=False)
+    data_set_2_file_status = models.BooleanField(default=False)
     def __str__(self):
-        return f"Generate Data Set2 Record for {self.entity_num}"
+        return f"Generate Data Erichment Records for {self.entity_num}"
 

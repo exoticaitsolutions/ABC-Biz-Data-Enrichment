@@ -17,6 +17,8 @@ file_handler = logging.FileHandler(f"{LOG_FOLDER}/core_app_log_{datetime.now().s
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logger.addHandler(file_handler)
 logger.addHandler(logging.StreamHandler())
+
+
 @admin.register(LicenseNumber)
 class LicenseNumberAdmin(BaseCSVImportAdmin):
     list_display = ['id', 'license_number']
@@ -89,7 +91,7 @@ class YelpRestaurantRecordAdmin(BaseCSVImportAdmin):
         def ImportYelpRestaurantData(request):
             mappings = {
                 'license_type': lambda row: row['License Type'],
-                'file_number': lambda row: get_or_create_license_number(row['Files Name']),
+                'file_number': lambda row: get_or_create_license_number(row['File Number']),
                 'primary_name': lambda row: row.get('Primary Name', '').strip(),
                 'dba_name': lambda row: row['DBA Name'],
                 'prem_addr_1': lambda row: row['Prem Addr 1'],
