@@ -1,0 +1,57 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+/ABC_BizEnrichment/__pycache__/*
+__pycache__/
+
+*.pyc
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+media/
+static/
+
+# Environment files
+.env
+.venv/
+venv/
+.envrc
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# IDEs and Editors
+.vscode/
+.idea/
+
+# PyCharm
+*.iml
+.idea/
+
+# MySQL
+*.sql
+*.sqlite3
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Other
+*.bak
+*.swp
+*/migrations/*
+
+*/migrations/*
+!*/migrations/__init__.py
+core_app/migrations/*
+merge_data/migrations/*
+db.sqlite3_back_up/
+*.csv
+db.sqlite3-journal

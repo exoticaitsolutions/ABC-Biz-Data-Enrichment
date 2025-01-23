@@ -1,0 +1,64 @@
+Collecting Django (from -r requirements.txt (line 2))
+  Using cached Django-5.1.5-py3-none-any.whl.metadata (4.2 kB)
+Collecting numpy (from -r requirements.txt (line 3))
+  Using cached numpy-2.2.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (62 kB)
+Collecting pandas (from -r requirements.txt (line 4))
+  Using cached pandas-2.2.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (89 kB)
+Collecting django-extensions (from -r requirements.txt (line 5))
+  Using cached django_extensions-3.2.3-py3-none-any.whl.metadata (6.3 kB)
+Collecting django-import-export (from -r requirements.txt (line 6))
+  Using cached django_import_export-4.3.3-py3-none-any.whl.metadata (12 kB)
+Collecting mysqlclient (from -r requirements.txt (line 7))
+  Using cached mysqlclient-2.2.7-cp312-cp312-linux_x86_64.whl
+Collecting psycopg2 (from -r requirements.txt (line 8))
+  Using cached psycopg2-2.9.10.tar.gz (385 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting psycopg2-binary (from -r requirements.txt (line 9))
+  Downloading psycopg2_binary-2.9.10-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+Collecting python-dotenv (from -r requirements.txt (line 10))
+  Using cached python_dotenv-1.0.1-py3-none-any.whl.metadata (23 kB)
+Collecting pymysql (from -r requirements.txt (line 11))
+  Using cached PyMySQL-1.1.1-py3-none-any.whl.metadata (4.4 kB)
+Collecting asgiref<4,>=3.8.1 (from Django->-r requirements.txt (line 2))
+  Using cached asgiref-3.8.1-py3-none-any.whl.metadata (9.3 kB)
+Collecting sqlparse>=0.3.1 (from Django->-r requirements.txt (line 2))
+  Using cached sqlparse-0.5.3-py3-none-any.whl.metadata (3.9 kB)
+Collecting python-dateutil>=2.8.2 (from pandas->-r requirements.txt (line 4))
+  Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+Collecting pytz>=2020.1 (from pandas->-r requirements.txt (line 4))
+  Using cached pytz-2024.2-py2.py3-none-any.whl.metadata (22 kB)
+Collecting tzdata>=2022.7 (from pandas->-r requirements.txt (line 4))
+  Using cached tzdata-2024.2-py2.py3-none-any.whl.metadata (1.4 kB)
+Collecting diff-match-patch==20241021 (from django-import-export->-r requirements.txt (line 6))
+  Using cached diff_match_patch-20241021-py3-none-any.whl.metadata (5.5 kB)
+Collecting tablib>=3.7.0 (from django-import-export->-r requirements.txt (line 6))
+  Using cached tablib-3.7.0-py3-none-any.whl.metadata (3.8 kB)
+Collecting six>=1.5 (from python-dateutil>=2.8.2->pandas->-r requirements.txt (line 4))
+  Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+Downloading Django-5.1.5-py3-none-any.whl (8.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.3/8.3 MB 10.6 MB/s eta 0:00:00
+Using cached numpy-2.2.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.1 MB)
+Using cached pandas-2.2.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (12.7 MB)
+Using cached django_extensions-3.2.3-py3-none-any.whl (229 kB)
+Using cached django_import_export-4.3.3-py3-none-any.whl (143 kB)
+Using cached diff_match_patch-20241021-py3-none-any.whl (43 kB)
+Downloading psycopg2_binary-2.9.10-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.0/3.0 MB 9.9 MB/s eta 0:00:00
+Using cached python_dotenv-1.0.1-py3-none-any.whl (19 kB)
+Using cached PyMySQL-1.1.1-py3-none-any.whl (44 kB)
+Using cached asgiref-3.8.1-py3-none-any.whl (23 kB)
+Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+Using cached pytz-2024.2-py2.py3-none-any.whl (508 kB)
+Using cached sqlparse-0.5.3-py3-none-any.whl (44 kB)
+Using cached tablib-3.7.0-py3-none-any.whl (47 kB)
+Using cached tzdata-2024.2-py2.py3-none-any.whl (346 kB)
+Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+Building wheels for collected packages: psycopg2
+  Building wheel for psycopg2 (pyproject.toml): started
+  Building wheel for psycopg2 (pyproject.toml): finished with status 'canceled'
+ERROR: Operation cancelled by user

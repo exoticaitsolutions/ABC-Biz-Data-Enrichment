@@ -1,0 +1,11 @@
+
+Django
+numpy
+pandas
+django-extensions
+django-import-export
+mysqlclient
+psycopg2
+psycopg2-binary
+python-dotenv
+pymysql
