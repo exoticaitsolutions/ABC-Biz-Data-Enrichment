@@ -175,7 +175,7 @@ class FilingsInformationAdmin(BaseCSVImportAdmin):
     csv_import_url_name = "filingsinformation" 
     PrincipalsInformationCoulmne = get_column_names(FilingsInformation,['id'], include_relations=True)
     fieldsets = (
-        ('Principals Information Record', {
+        ('Filings Information Record', {
             'fields': tuple(PrincipalsInformationCoulmne),
         }),
     )

@@ -175,7 +175,6 @@ class DataSet2Record(models.Model):
 class DataErichment(models.Model):
 # Data Set 1 
     abc_license_number = models.TextField(blank=True, null=True)  # Converted to TextField
-    yelp_file_number = models.TextField(blank=True, null=True) 
     # License Output
     abc_primary_owner = models.TextField( null=True, blank=True)
     abc_office_of_application = models.TextField( null=True, blank=True)
@@ -214,6 +213,7 @@ class DataErichment(models.Model):
     google_types = models.TextField( null=True, blank=True)
     google_business_status = models.TextField( null=True, blank=True)
     # Yelp Restaurant Record
+    yelp_file_number = models.TextField(blank=True, null=True) 
     yelp_license_type = models.TextField(blank=True, null=True)
     yelp_primary_name = models.TextField(blank=True, null=True)
     yelp_dba_name = models.TextField(blank=True, null=True)
@@ -337,4 +337,4 @@ class DataErichment(models.Model):
     data_set_1_file_status = models.BooleanField(default=False)
     data_set_2_file_status = models.BooleanField(default=False)
     def __str__(self):
-        return f"Generate Data Erichment Records for {self.entity_name}"
+        return f"Generate Data Erichment Records for {self.principalsInformation_entity_name}"

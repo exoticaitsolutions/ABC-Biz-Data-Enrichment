@@ -1,6 +1,7 @@
 
 import time
 from django.contrib import admin,messages
+from django.db.models import CharField
 from ABC_BizEnrichment.common.helper_function import generate_model_fields, get_column_names, get_full_function_name
 from ABC_BizEnrichment.common.merge_data.helper_function import CustomMergeAdminMixin
 from django.http import HttpResponseRedirect 
@@ -10,7 +11,6 @@ from django.db.models.functions import Replace, Lower
 from core_app.models import AgentsInformation, FilingsInformation, LicenseOutput, PrincipalsInformation, YelpRestaurantRecord
 from merge_data.models import DataErichment, DataSet1Record, DataSet2Record
 from import_export.admin import ExportMixin
-from django.db.models import CharField
 
 @admin.register(DataSet1Record)
 class DataSet1RecordAdmin(CustomMergeAdminMixin, admin.ModelAdmin):  # ExportMixin
@@ -163,36 +163,68 @@ class DataSet2RecordAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
             self.message_user(request, message, messages.SUCCESS)
             return HttpResponseRedirect("/admin/merge_data/dataset2record/")  # Redirect after processing
         return DataSet2Recordmerge_view
-
 @admin.register(DataErichment)
 class DataErichmentAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
     merge_url_name = "dataerichmentrecords"
-    # list_display = ("id","business_name", "licensee", "entity_name", "data_set_1_file_status", "data_set_2_file_status")
-    search_fields = ['entity_name', 'licensee']  # Add more fields here if needed
-    
+    list_display = ("id","abc_business_name", "abc_licensee", "agentsInformation_entity_name", "data_set_1_file_status", "data_set_2_file_status")
+    # search_fields = ['entity_name', 'licensee']  # Add more fields here if needed
+    yelp_output_all_columns = get_column_names(YelpRestaurantRecord,['id'], include_relations=True)
+    PrincipalsInformationCoulmne = get_column_names(PrincipalsInformation,['id'], include_relations=True)
+    AgentsInformationCoulmne = get_column_names(AgentsInformation,['id'], include_relations=True)
+    FilingsInformationCoulmne = get_column_names(FilingsInformation,['id'], include_relations=True)
+    data_set_1_all_columns = get_column_names(DataSet1Record, ['id'], include_relations=True)
+    data_set_2_all_columns = get_column_names(DataSet2Record, ['id'], include_relations=True)
+    fieldsets = (
+       ('ABC License Records', {
+            'classes': ('collapse',),
+            'fields': ('abc_license_number', 'abc_primary_owner', 'abc_office_of_application', 'abc_business_name', 'abc_business_address', 'abc_county', 'abc_census_tract', 'abc_licensee', 'abc_license_type', 'abc_license_type_status', 'abc_status_date', 'abc_term', 'abc_original_issue_date', 'abc_expiration_date', 'abc_master', 'abc_duplicate', 'abc_fee_code', 'abc_transfers', 'abc_conditions', 'abc_operating_restrictions', 'abc_disciplinary_action', 'abc_disciplinary_history', 'abc_holds', 'abc_escrows', 'abc_from_license_number', 'abc_transferred_on', 'abc_to_license_number', 'abc_transferred_on2'),
+        }),('Google Scrapp Record', {
+            'classes': ('collapse',''),
+            'fields': ('google_business_name', 'google_business_address','google_place_name','google_rating','google_phone_number','google_website','google_types','google_business_status'),
+        }),
+         ('Yelp Restaurant Record', {
+             'classes': ('collapse',''),
+            'fields': tuple(yelp_output_all_columns),
+        }),
+        ('Principals Information Record', {
+             'classes': ('collapse',''),
+            'fields': tuple(PrincipalsInformationCoulmne),
+        }),
+        ('Agents Information Record', {
+            'classes': ('collapse',''),
+            'fields': tuple(AgentsInformationCoulmne),
+        }),
+         ('Filings Information Record', {
+              'classes': ('collapse',''),
+            'fields': tuple(FilingsInformationCoulmne),
+        }),
+          ('Another Information Record', {
+              'classes': ('collapse',''),
+            'fields': ('data_set_1_file_status','data_set_2_file_status'),
+        }),
+    )
+
     def get_merge_view(self):
         def DataSet3Recordmerge_view(request):
             full_function_name = get_full_function_name()
-            
             message = 'Data Merged successfully for Filling , Principal & Agent and saved in Dataset 2 (Combined Information)'
-            data_set_1_all_columns = get_column_names(DataSet1Record, ['id', 'license_type', 'file_number'], include_relations=True)
-            data_set_2_all_columns = get_column_names(DataSet2Record, ['id', 'license_type', 'file_number'], include_relations=True)
             logger.info(f"{full_function_name}: {message}")
-            batch_size = 1
+            batch_size = 100000
             normalized_first_table = DataSet1Record.objects.annotate(
-                normalized_name=Lower(
+            normalized_name=Lower(
+                Replace(
                     Replace(
                         Replace(
-                            Replace(
-                                F('abc_licensee'),
-                                Value('|'), Value('')
-                            ),
-                            Value(','), Value('')
+                            F('abc_licensee'),
+                            Value('|'), Value('')
                         ),
-                        Value('.'), Value(''), output_field=CharField()  # specify CharField as the output field type
-                    )
-                )
-            )
+                        Value(','), Value('')
+                    ),
+                    Value('.'), Value('')
+                ),
+                output_field=CharField()  # Correct usage of CharField as output field type
+                 
+                  ))
             normalized_second_table = DataSet2Record.objects.annotate(
                 normalized_name=Lower(
                     Replace(
@@ -203,40 +235,41 @@ class DataErichmentAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
                             ),
                             Value(','), Value('')
                         ),
-                        Value('.'), Value(''), output_field=CharField()  # specify CharField as the output field type
-                    )
+                        Value('.'), Value('')
+                    ),
+                   output_field=CharField()  # Correct usage of CharField as output field type
                 )
             )
-            # data_Set1_rec = normalized_first_table()
-            # dataset_2_rec = normalized_second_table()
             total_data_Set_1_count = normalized_first_table.count()
             logger.info(f"{full_function_name}: total number of data set 1 data: {total_data_Set_1_count}")   
             
             for i in range(0, total_data_Set_1_count, batch_size):
                 batch = normalized_first_table[i:i + batch_size]
                 for first_record in batch:
-                    dataset3records = DataErichment()
                     licensee = str(first_record.normalized_name)
                     logger.info(f"{full_function_name}: licensee = {licensee}")
-                    matching_second_records = normalized_second_table.filter(normalized_name=first_record.normalized_name )
-                    # logger.info(f"{full_function_name}: licensee = {licensee}")
+                    matching_second_records = normalized_second_table.filter(normalized_name=licensee)
+                    logger.info(f"{full_function_name}: matching_second_records = {matching_second_records}")
                     if matching_second_records:
-                        logger.info(f"{full_function_name}: the licensee found in the DataErichment")
-                        for second_record in matching_second_records:
-                            for column_name in data_set_2_all_columns:
-                                if hasattr(second_record, column_name):
-                                    setattr(dataset3records, column_name, getattr(second_record, column_name))
-                        dataset3records.data_set_2_file_status = True
-                    logger.info(f"{full_function_name}: the licensee is not  found in the DataErichment")
-                    for column_name in data_set_1_all_columns:
-                        if hasattr(first_record, column_name):
-                            setattr(dataset3records, column_name, getattr(first_record, column_name))
-                    dataset3records.data_set_1_file_status = True
-                    dataset3records.save()
+                        logger.info(f"{full_function_name}: the licensee found in the dataset2 for any Records")
+                        logger.info(f"{full_function_name}: matching_second_record = {len(matching_second_records)}")
+                        for second_records in matching_second_records:
+                            dataset3records = DataErichment()
+                            for column_name in self.data_set_2_all_columns:
+                                if hasattr(second_records, column_name):
+                                    setattr(dataset3records, column_name, getattr(second_records, column_name))
+                            dataset3records.data_set_2_file_status = True
+                            for column_name in self.data_set_1_all_columns:
+                                if hasattr(first_record, column_name):
+                                    setattr(dataset3records, column_name, getattr(first_record, column_name))
+                                dataset3records.data_set_1_file_status = True
+                            dataset3records.save()
+                    else:
+                        logger.info(f"{full_function_name}: the licensee is not  found in the dataset2 for a Records")
                     status = 'created'
                     logger.info(f"{full_function_name}: {status} Data Set3 Record for license_number: {first_record.normalized_name}")
                 logger.info(f"{full_function_name}: Imported {len(batch)} records (batch {i // batch_size + 1}).")
-                time.sleep(10)
+                time.sleep(2)
                 break
             self.message_user(request, message, messages.SUCCESS)
             return HttpResponseRedirect("/admin/merge_data/dataerichment/")
