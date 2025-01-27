@@ -78,21 +78,20 @@ class YelpRestaurantRecordAdmin(BaseCSVImportAdmin):
     def get_import_view(self):
         def ImportYelpRestaurantData(request):
             mappings = {
-                'yelp_license_type': lambda row: row['License Type'],
-                'yelp_file_number': lambda row: row['File Number'],
-                'yelp_primary_name': lambda row: row.get('Primary Name', '').strip(),
-                'yelp_dba_name': lambda row: row['DBA Name'],
-                'yelp_prem_addr_1': lambda row: row['Prem Addr 1'],
-                'yelp_prem_addr_2': lambda row: row.get('Prem Addr 2', '').strip(),
-                'yelp_prem_city': lambda row: row['Prem City'],
-                'yelp_prem_state': lambda row: row['Prem State'],
-                'yelp_prem_zip': lambda row: row['Prem Zip'],
-                'yelp_link': lambda row: row.get('Yelp Link', '').strip(),
-                'yelp_name': lambda row: row.get('Yelp Name', '').strip(),
-                'yelp_phone': lambda row: row.get('Yelp Phone', '').strip(),
-                'yelp_web_site': lambda row: row.get('Yelp Web Site', '').strip(),
-               'yelp_rating': lambda row: validate_yelp_rating(row.get('Yelp Rating', '')),
-            }
+            'yelp_license_type': lambda row: row.get('License Type', '').strip(),
+            'yelp_file_number': lambda row: row.get('File Number', '').strip(),
+            'yelp_primary_name': lambda row: (row.get('Primary Name') or '').strip(),
+            'yelp_dba_name': lambda row: (row.get('DBA Name') or '').strip(),
+            'yelp_prem_addr_1': lambda row: (row.get('Prem Addr 1') or '').strip(),
+            'yelp_prem_addr_2': lambda row: (row.get('Prem Addr 2') or '').strip(),
+            'yelp_prem_city': lambda row: (row.get('Prem City') or '').strip(),
+            'yelp_prem_state': lambda row: (row.get('Prem State') or '').strip(),
+            'yelp_prem_zip': lambda row: (row.get('Prem Zip') or '').strip(),
+            'yelp_link': lambda row: (row.get('Yelp Link') or '').strip(),
+            'yelp_name': lambda row: (row.get('Yelp Name') or '').strip(),
+            'yelp_phone': lambda row: (row.get('Yelp Phone') or '').strip(),
+            'yelp_web_site': lambda row: (row.get('Yelp Web Site') or '').strip(),
+            'yelp_rating': lambda row: validate_yelp_rating(row.get('Yelp Rating', '')), }
             return self.process_csv_import(request, YelpRestaurantRecord, mappings)
         return ImportYelpRestaurantData
 # Genrating Data Set 1  End ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
