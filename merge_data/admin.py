@@ -1,4 +1,5 @@
 
+import csv
 import time
 from django.contrib import admin,messages
 from django.db.models import CharField
@@ -11,6 +12,7 @@ from django.db.models.functions import Replace, Lower
 from core_app.models import AgentsInformation, FilingsInformation, LicenseOutput, PrincipalsInformation, YelpRestaurantRecord
 from merge_data.models import DataErichment, DataSet1Record, DataSet2Record
 from import_export.admin import ExportMixin
+import pandas as pd
 
 @admin.register(DataSet1Record)
 class DataSet1RecordAdmin(CustomMergeAdminMixin, admin.ModelAdmin):  # ExportMixin
@@ -94,6 +96,8 @@ class DataSet2RecordAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
     agents_information_all_columns = get_column_names(AgentsInformation, ['id'], include_relations=True)
     filings_Information_all_columns = get_column_names(FilingsInformation, ['id'], include_relations=True)
     principalsinformation_all_columns = get_column_names(PrincipalsInformation, ['id'], include_relations=True)
+    data_all_columns = get_column_names(DataErichment, ['id'], include_relations=True)
+
     fieldsets = (
          ('Principals Information Record', {
             'classes': ('collapse',),
@@ -164,113 +168,186 @@ class DataSet2RecordAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
             return HttpResponseRedirect("/admin/merge_data/dataset2record/")  # Redirect after processing
         return DataSet2Recordmerge_view
 @admin.register(DataErichment)
-class DataErichmentAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
+class DataErichmentAdmin(ExportMixin, admin.ModelAdmin):
     merge_url_name = "dataerichmentrecords"
-    list_display = ("id","abc_business_name", "abc_licensee", "agentsInformation_entity_name", "data_set_1_file_status", "data_set_2_file_status")
+    list_display = ("id","abc_licensee", "agentsInformation_entity_name", "data_set_1_file_status", "data_set_2_file_status","Company_Info_Name","Company_Info_Type")
     # search_fields = ['entity_name', 'licensee']  # Add more fields here if needed
-    yelp_output_all_columns = get_column_names(YelpRestaurantRecord,['id'], include_relations=True)
-    PrincipalsInformationCoulmne = get_column_names(PrincipalsInformation,['id'], include_relations=True)
-    AgentsInformationCoulmne = get_column_names(AgentsInformation,['id'], include_relations=True)
-    FilingsInformationCoulmne = get_column_names(FilingsInformation,['id'], include_relations=True)
-    data_set_1_all_columns = get_column_names(DataSet1Record, ['id'], include_relations=True)
-    data_set_2_all_columns = get_column_names(DataSet2Record, ['id'], include_relations=True)
-    fieldsets = (
-       ('ABC License Records', {
-            'classes': ('collapse',),
-            'fields': ('abc_license_number', 'abc_primary_owner', 'abc_office_of_application', 'abc_business_name', 'abc_business_address', 'abc_county', 'abc_census_tract', 'abc_licensee', 'abc_license_type', 'abc_license_type_status', 'abc_status_date', 'abc_term', 'abc_original_issue_date', 'abc_expiration_date', 'abc_master', 'abc_duplicate', 'abc_fee_code', 'abc_transfers', 'abc_conditions', 'abc_operating_restrictions', 'abc_disciplinary_action', 'abc_disciplinary_history', 'abc_holds', 'abc_escrows', 'abc_from_license_number', 'abc_transferred_on', 'abc_to_license_number', 'abc_transferred_on2'),
-        }),('Google Scrapp Record', {
-            'classes': ('collapse',''),
-            'fields': ('google_business_name', 'google_business_address','google_place_name','google_rating','google_phone_number','google_website','google_types','google_business_status'),
-        }),
-         ('Yelp Restaurant Record', {
-             'classes': ('collapse',''),
-            'fields': tuple(yelp_output_all_columns),
-        }),
-        ('Principals Information Record', {
-             'classes': ('collapse',''),
-            'fields': tuple(PrincipalsInformationCoulmne),
-        }),
-        ('Agents Information Record', {
-            'classes': ('collapse',''),
-            'fields': tuple(AgentsInformationCoulmne),
-        }),
-         ('Filings Information Record', {
-              'classes': ('collapse',''),
-            'fields': tuple(FilingsInformationCoulmne),
-        }),
-          ('Another Information Record', {
-              'classes': ('collapse',''),
-            'fields': ('data_set_1_file_status','data_set_2_file_status'),
-        }),
-    )
-
     def get_merge_view(self):
         def DataSet3Recordmerge_view(request):
             full_function_name = get_full_function_name()
+            data_all_columns = get_column_names(DataErichment,['id'], include_relations=True) # type: ignore
             message = 'Data Merged successfully for Filling , Principal & Agent and saved in Dataset 2 (Combined Information)'
-            logger.info(f"{full_function_name}: {message}")
-            batch_size = 100000
-            normalized_first_table = DataSet1Record.objects.annotate(
-            normalized_name=Lower(
-                Replace(
-                    Replace(
-                        Replace(
-                            F('abc_licensee'),
-                            Value('|'), Value('')
-                        ),
-                        Value(','), Value('')
-                    ),
-                    Value('.'), Value('')
-                ),
-                output_field=CharField()  # Correct usage of CharField as output field type
-                 
-                  ))
-            normalized_second_table = DataSet2Record.objects.annotate(
-                normalized_name=Lower(
-                    Replace(
-                        Replace(
-                            Replace(
-                                F('principalsInformation_entity_name'),
-                                Value('|'), Value('')
-                            ),
-                            Value(','), Value('')
-                        ),
-                        Value('.'), Value('')
-                    ),
-                   output_field=CharField()  # Correct usage of CharField as output field type
-                )
-            )
-            total_data_Set_1_count = normalized_first_table.count()
-            logger.info(f"{full_function_name}: total number of data set 1 data: {total_data_Set_1_count}")   
-            
-            for i in range(0, total_data_Set_1_count, batch_size):
-                batch = normalized_first_table[i:i + batch_size]
-                for first_record in batch:
-                    licensee = str(first_record.normalized_name)
-                    logger.info(f"{full_function_name}: licensee = {licensee}")
-                    matching_second_records = normalized_second_table.filter(normalized_name=licensee)
-                    logger.info(f"{full_function_name}: matching_second_records = {matching_second_records}")
-                    if matching_second_records:
-                        logger.info(f"{full_function_name}: the licensee found in the dataset2 for any Records")
-                        logger.info(f"{full_function_name}: matching_second_record = {len(matching_second_records)}")
-                        for second_records in matching_second_records:
-                            dataset3records = DataErichment()
-                            for column_name in self.data_set_2_all_columns:
-                                if hasattr(second_records, column_name):
-                                    setattr(dataset3records, column_name, getattr(second_records, column_name))
-                            dataset3records.data_set_2_file_status = True
-                            for column_name in self.data_set_1_all_columns:
-                                if hasattr(first_record, column_name):
-                                    setattr(dataset3records, column_name, getattr(first_record, column_name))
-                                dataset3records.data_set_1_file_status = True
-                            dataset3records.save()
-                    else:
-                        logger.info(f"{full_function_name}: the licensee is not  found in the dataset2 for a Records")
-                    status = 'created'
-                    logger.info(f"{full_function_name}: {status} Data Set3 Record for license_number: {first_record.normalized_name}")
-                logger.info(f"{full_function_name}: Imported {len(batch)} records (batch {i // batch_size + 1}).")
-                time.sleep(2)
+            csv_file = 'Mike_Data_Erichment_Records.csv'
+            logger.info(f"{full_function_name}: Reading CSV file {csv_file}...")
+            with open(csv_file, mode='r', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                rows = list(reader)
+            logger.info(f"{full_function_name}: Total number of records in the {csv_file} : {len(rows)}")
+            batch_size = 50
+            for i in range(0, len(rows), batch_size):
+                batch = rows[i:i + batch_size]
+                for batch_license_output_data in batch:
+                    print(batch_license_output_data["Company_Info_License Number"])
+                    # break
+                    dataset2records = DataErichment()
+                    dataset2records.abc_license_number = batch_license_output_data["abc_license_number"]
+                    dataset2records.Company_Info_License_Number = batch_license_output_data["Company_Info_License Number"]
+                    dataset2records.Company_Info_Type = batch_license_output_data["Company_Info_Type"]
+                    dataset2records.Company_Info_Name = batch_license_output_data["Company_Info_Name"]
+                    dataset2records.Company_Info_Role = batch_license_output_data["Company_Info_Role"]
+                    dataset2records.abc_business_address = batch_license_output_data["abc_business_address"]
+                    dataset2records.abc_county = batch_license_output_data["abc_county"]
+                    dataset2records.abc_census_tract = batch_license_output_data["abc_census_tract"]
+                    dataset2records.abc_licensee = batch_license_output_data["abc_licensee"]
+                    dataset2records.abc_license_type = batch_license_output_data["abc_license_type"]
+                    dataset2records.abc_license_type_status = batch_license_output_data["abc_license_type_status"]
+                    dataset2records.abc_status_date = batch_license_output_data["abc_status_date"]
+                    dataset2records.abc_term = batch_license_output_data["abc_term"]
+                    dataset2records.abc_original_issue_date = batch_license_output_data["abc_original_issue_date"]
+                    dataset2records.abc_expiration_date = batch_license_output_data["abc_expiration_date"]
+                    dataset2records.abc_master = batch_license_output_data["abc_master"]
+                    dataset2records.abc_duplicate = bool(batch_license_output_data["abc_duplicate"])
+                    dataset2records.abc_fee_code = batch_license_output_data["abc_fee_code"]
+                    dataset2records.abc_transfers = batch_license_output_data["abc_transfers"]
+                    dataset2records.abc_conditions = batch_license_output_data["abc_conditions"]
+                    dataset2records.abc_operating_restrictions = batch_license_output_data["abc_operating_restrictions"]
+                    dataset2records.abc_disciplinary_action = batch_license_output_data["abc_disciplinary_action"]
+                    dataset2records.abc_disciplinary_history = batch_license_output_data["abc_disciplinary_history"]
+                    dataset2records.abc_holds = batch_license_output_data["abc_holds"]
+                    dataset2records.abc_escrows = batch_license_output_data["abc_escrows"]
+                    dataset2records.abc_from_license_number = batch_license_output_data["abc_from_license_number"]
+                    dataset2records.abc_transferred_on = batch_license_output_data["abc_transferred_on"]
+                    dataset2records.abc_to_license_number = batch_license_output_data["abc_to_license_number"]
+                    dataset2records.abc_transferred_on2 = batch_license_output_data["abc_transferred_on2"]
+                    dataset2records.abc_license_type = batch_license_output_data["abc_license_type"]
+                    dataset2records.abc_file_number = batch_license_output_data["abc_file_number"]
+                    dataset2records.abc_lic_or_app = batch_license_output_data["abc_lic_or_app"]
+                    dataset2records.abc_type_status = batch_license_output_data["abc_type_status"]
+                    dataset2records.abc_type_orig_iss_date = batch_license_output_data["abc_type_orig_iss_date"]
+                    dataset2records.abc_expir_date = batch_license_output_data["abc_expir_date"]
+                    dataset2records.abc_fee_codes = batch_license_output_data["abc_fee_codes"]
+                    dataset2records.abc_dup_counts = batch_license_output_data["abc_dup_counts"]
+                    dataset2records.abc_master_ind = batch_license_output_data["abc_master_ind"]
+                    dataset2records.abc_term_in_number_of_months = batch_license_output_data["abc_term_in_number_of_months"]
+                    dataset2records.abc_geo_code = batch_license_output_data["abc_geo_code"]
+                    dataset2records.abc_district = batch_license_output_data["abc_district"]
+                    dataset2records.abc_primary_name = batch_license_output_data["abc_primary_name"]
+                    dataset2records.abc_prem_addr_1 = batch_license_output_data["abc_prem_addr_1"]
+                    dataset2records.abc_prem_addr_2 = batch_license_output_data["abc_prem_addr_2"]
+                    dataset2records.abc_prem_city = batch_license_output_data["abc_prem_city"]
+                    dataset2records.abc_prem_state = batch_license_output_data["abc_prem_state"]
+                    dataset2records.abc_prem_zip = batch_license_output_data["abc_prem_zip"]
+                    dataset2records.abc_dba_name = batch_license_output_data["abc_dba_name"]
+                    dataset2records.abc_mail_addr_1 = batch_license_output_data["abc_mail_addr_1"]
+                    dataset2records.abc_mail_addr_2 = batch_license_output_data["abc_mail_addr_2"]
+                    dataset2records.abc_mail_city = batch_license_output_data["abc_mail_city"]
+                    dataset2records.abc_mail_state = batch_license_output_data["abc_mail_state"]
+                    dataset2records.abc_mail_zip = batch_license_output_data["abc_mail_zip"]
+                    dataset2records.abc_prem_county = batch_license_output_data["abc_prem_county"]
+                    dataset2records.abc_prem_census_tract = batch_license_output_data["abc_prem_census_tract"] # type: ignore
+                    dataset2records.google_business_name = batch_license_output_data["google_business_name"]
+                    dataset2records.google_business_address = batch_license_output_data["google_business_address"]
+                    dataset2records.google_place_name = batch_license_output_data["google_place_name"]
+                    dataset2records.google_rating = batch_license_output_data["google_rating"]
+                    dataset2records.google_phone_number = batch_license_output_data["google_phone_number"]
+                    dataset2records.google_website = batch_license_output_data["google_website"]
+                    dataset2records.google_types = batch_license_output_data["google_types"]
+                    dataset2records.google_business_status = batch_license_output_data["google_business_status"]
+                    dataset2records.yelp_file_number = batch_license_output_data["yelp_file_number"]
+                    dataset2records.yelp_license_type = batch_license_output_data["yelp_license_type"]
+                    dataset2records.yelp_primary_name = batch_license_output_data["yelp_primary_name"]
+                    dataset2records.yelp_dba_name = batch_license_output_data["yelp_dba_name"]
+                    dataset2records.yelp_prem_addr_1 = batch_license_output_data["yelp_prem_addr_1"]
+                    dataset2records.yelp_prem_addr_2 = batch_license_output_data["yelp_prem_addr_2"]
+                    dataset2records.yelp_prem_city = batch_license_output_data["yelp_prem_city"]
+                    dataset2records.yelp_prem_state = batch_license_output_data["yelp_prem_state"]
+                    dataset2records.yelp_prem_zip = batch_license_output_data["yelp_prem_zip"]
+                    dataset2records.yelp_link = batch_license_output_data["yelp_link"]
+                    dataset2records.yelp_name = batch_license_output_data["yelp_name"]
+                    dataset2records.yelp_phone = batch_license_output_data["yelp_phone"]
+                    dataset2records.yelp_web_site = batch_license_output_data["yelp_web_site"]
+                    dataset2records.yelp_rating = batch_license_output_data["yelp_rating"]
+                    dataset2records.output_license_file_status = bool(batch_license_output_data["output_license_file_status"])
+                    dataset2records.yelp_file_status = bool(batch_license_output_data["yelp_file_status"])
+                    dataset2records.agentsInformation_entity_name = batch_license_output_data["agentsInformation_entity_name"]
+                    dataset2records.agentsInformation_entity_num = batch_license_output_data["agentsInformation_entity_num"]
+                    dataset2records.agentsInformation_org_name = batch_license_output_data["agentsInformation_org_name"]
+                    dataset2records.agentsInformation_first_name = batch_license_output_data["agentsInformation_first_name"]
+                    dataset2records.agentsInformation_middle_name = batch_license_output_data["agentsInformation_middle_name"]
+                    dataset2records.agentsInformation_last_name = batch_license_output_data["agentsInformation_last_name"]
+                    dataset2records.agentsInformation_physical_address1 = batch_license_output_data["agentsInformation_physical_address1"]
+                    dataset2records.agentsInformation_physical_address2 = batch_license_output_data["agentsInformation_physical_address2"]
+                    dataset2records.agentsInformation_physical_address3 = batch_license_output_data["agentsInformation_physical_address3"]
+                    dataset2records.agentsInformation_physical_city = batch_license_output_data["agentsInformation_physical_city"]
+                    dataset2records.agentsInformation_physical_state = batch_license_output_data["agentsInformation_physical_state"]
+                    dataset2records.agentsInformation_physical_country = batch_license_output_data["agentsInformation_physical_country"]
+                    dataset2records.agentsInformation_physical_postal_code = batch_license_output_data["agentsInformation_physical_postal_code"]
+                    dataset2records.agentsInformation_agent_type = batch_license_output_data["agentsInformation_agent_type"]
+                    dataset2records.filingsInformation_entity_name = batch_license_output_data["filingsInformation_entity_name"]
+                    dataset2records.filingsInformation_entity_num = batch_license_output_data["filingsInformation_entity_num"]
+                    dataset2records.filingsInformation_initial_filing_date = batch_license_output_data["filingsInformation_initial_filing_date"]
+                    dataset2records.filingsInformation_jurisdiction = batch_license_output_data["filingsInformation_jurisdiction"]
+                    dataset2records.filingsInformation_entity_status = batch_license_output_data["filingsInformation_entity_status"]
+                    dataset2records.filingsInformation_standing_sos = batch_license_output_data["filingsInformation_standing_sos"]
+                    dataset2records.filingsInformation_entity_type = batch_license_output_data["filingsInformation_entity_type"]
+                    dataset2records.filingsInformation_filing_type = batch_license_output_data["filingsInformation_filing_type"]
+                    dataset2records.filingsInformation_foreign_name = batch_license_output_data["filingsInformation_foreign_name"]
+                    dataset2records.filingsInformation_standing_ftb = batch_license_output_data["filingsInformation_standing_ftb"]
+                    dataset2records.filingsInformation_standing_vcfcf = batch_license_output_data["filingsInformation_standing_vcfcf"]
+                    dataset2records.filingsInformation_standing_agent = batch_license_output_data["filingsInformation_standing_agent"]
+                    dataset2records.filingsInformation_suspension_date = batch_license_output_data["filingsInformation_suspension_date"]
+                    dataset2records.filingsInformation_last_si_file_number = batch_license_output_data["filingsInformation_last_si_file_number"]
+                    dataset2records.filingsInformation_last_si_file_date = batch_license_output_data["filingsInformation_last_si_file_date"]
+                    dataset2records.filingsInformation_principal_address = batch_license_output_data["filingsInformation_principal_address"]
+                    dataset2records.filingsInformation_principal_address2 = batch_license_output_data["filingsInformation_principal_address2"]
+                    dataset2records.filingsInformation_principal_city = batch_license_output_data["filingsInformation_principal_city"]
+                    dataset2records.filingsInformation_principal_state = batch_license_output_data["filingsInformation_principal_state"]
+                    dataset2records.filingsInformation_principal_country = batch_license_output_data["filingsInformation_principal_country"]
+                    dataset2records.filingsInformation_principal_postal_code = batch_license_output_data["filingsInformation_principal_postal_code"]
+                    dataset2records.filingsInformation_mailing_address = batch_license_output_data["filingsInformation_mailing_address"]
+                    dataset2records.filingsInformation_mailing_address2 = batch_license_output_data["filingsInformation_mailing_address2"]
+                    dataset2records.filingsInformation_mailing_address3 = batch_license_output_data["filingsInformation_mailing_address3"]
+                    dataset2records.filingsInformation_mailing_city = batch_license_output_data["filingsInformation_mailing_city"]
+                    dataset2records.filingsInformation_mailing_state = batch_license_output_data["filingsInformation_mailing_state"]
+                    dataset2records.filingsInformation_mailing_country = batch_license_output_data["filingsInformation_mailing_country"]
+                    dataset2records.filingsInformation_mailing_postal_code = batch_license_output_data["filingsInformation_mailing_postal_code"]
+                    dataset2records.filingsInformation_principal_address_in_ca = batch_license_output_data["filingsInformation_principal_address_in_ca"]
+                    dataset2records.filingsInformation_principal_address2_in_ca = batch_license_output_data["filingsInformation_principal_address2_in_ca"]
+                    dataset2records.filingsInformation_principal_city_in_ca = batch_license_output_data["filingsInformation_principal_city_in_ca"]
+                    dataset2records.filingsInformation_principal_state_in_ca = batch_license_output_data["filingsInformation_principal_state_in_ca"]
+                    dataset2records.filingsInformation_principal_country_in_ca = batch_license_output_data["filingsInformation_principal_country_in_ca"]
+                    dataset2records.filingsInformation_principal_postal_code_in_ca = batch_license_output_data["filingsInformation_principal_postal_code_in_ca"]
+                    dataset2records.filingsInformation_llc_management_structure = batch_license_output_data["filingsInformation_llc_management_structure"]
+                    dataset2records.filingsInformation_type_of_business = batch_license_output_data["filingsInformation_type_of_business"]
+                    dataset2records.principalsInformation_entity_name = batch_license_output_data["principalsInformation_entity_name"]
+                    dataset2records.principalsInformation_entity_num = batch_license_output_data["principalsInformation_entity_num"]
+                    dataset2records.principalsInformation_org_name = batch_license_output_data["principalsInformation_org_name"]
+                    dataset2records.principalsInformation_first_name = batch_license_output_data["principalsInformation_first_name"]
+                    dataset2records.principalsInformation_middle_name = batch_license_output_data["principalsInformation_middle_name"]
+                    dataset2records.principalsInformation_last_name = batch_license_output_data["principalsInformation_last_name"]
+                    dataset2records.principalsInformation_address1 = batch_license_output_data["principalsInformation_address1"]
+                    dataset2records.principalsInformation_address2 = batch_license_output_data["principalsInformation_address2"]
+                    dataset2records.principalsInformation_address3 = batch_license_output_data["principalsInformation_address3"]
+                    dataset2records.principalsInformation_city = batch_license_output_data["principalsInformation_city"]
+                    dataset2records.principalsInformation_state = batch_license_output_data["principalsInformation_state"]
+                    dataset2records.principalsInformation_country = batch_license_output_data["principalsInformation_country"]
+                    dataset2records.principalsInformation_postal_code = batch_license_output_data["principalsInformation_postal_code"]
+                    dataset2records.principalsInformation_position_1 = batch_license_output_data["principalsInformation_position_1"]
+                    dataset2records.principalsInformation_position_2 = batch_license_output_data["principalsInformation_position_2"]
+                    dataset2records.principalsInformation_position_3 = batch_license_output_data["principalsInformation_position_3"]
+                    dataset2records.principalsInformation_position_4 = batch_license_output_data["principalsInformation_position_4"]
+                    dataset2records.principalsInformation_position_5 = batch_license_output_data["principalsInformation_position_5"]
+                    dataset2records.principalsInformation_position_6 = batch_license_output_data["principalsInformation_position_6"]
+                    dataset2records.principalsInformation_position_7 = batch_license_output_data["principalsInformation_position_7"]
+                    dataset2records.filling_information_file_status = bool(batch_license_output_data["filling_information_file_status"])
+                    dataset2records.principal_information_file_status =  bool(batch_license_output_data["principal_information_file_status"])
+                    dataset2records.agentsInformation_file_status =  bool(batch_license_output_data["agentsInformation_file_status"])
+                    dataset2records.data_set_1_file_status =  bool(batch_license_output_data["data_set_1_file_status"])
+                    dataset2records.data_set_2_file_status =  bool(batch_license_output_data["data_set_2_file_status"])
+                    dataset2records.save()    
+                    # break
                 break
+            logger.info(f"{full_function_name}: {message}")
             self.message_user(request, message, messages.SUCCESS)
             return HttpResponseRedirect("/admin/merge_data/dataerichment/")
         return DataSet3Recordmerge_view     

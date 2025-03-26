@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class MergeDataConfig(AppConfig):
+class YelprecordsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'merge_data'
+    name = 'yelprecords'

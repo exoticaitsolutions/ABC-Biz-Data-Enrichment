@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     "core_app",
     "merge_data",
     'django_extensions',
-    'import_export'
+    'import_export',
+    'yelprecords'
 ]
 
 MIDDLEWARE = [
@@ -83,19 +84,12 @@ print('LOG_FOLDER:', LOG_FOLDER)
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 if DB_TYPE == 'sqlite3':
-    print('Using SQLite3')
     DATABASES = {
     "default": { "ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3", }  }
 else:
-    print('Using MySQL')
-    print('DB_NAME:', os.getenv('DB_NAME'))
-    print('DB_USER:', os.getenv('DB_USER'))
-    print('DB_PASSWORD:', os.getenv('DB_PASSWORD'))
-    print('DB_HOST:', os.getenv('DB_HOST'))
-    print('DB_PORT:', os.getenv('DB_PORT'))
     DATABASES = {
         'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': os.getenv('DB_ENGLINE'),
         'NAME': os.getenv('DB_NAME'),
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
