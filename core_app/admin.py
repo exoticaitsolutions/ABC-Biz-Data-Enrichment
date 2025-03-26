@@ -1,9 +1,13 @@
+import csv
 from django.contrib import admin
-from ABC_BizEnrichment.common.core_app.helper_function import BaseCSVImportAdmin
-from ABC_BizEnrichment.common.helper_function import get_column_names, parse_date, validate_yelp_rating
+from django.http import HttpResponseRedirect
+from ABC_BizEnrichment.common.core_app.helper_function import BaseCSVImportAdmin, CSVImportAdminMixin, CSVImportForm
+from ABC_BizEnrichment.common.helper_function import get_column_names, get_full_function_name, parse_date, remove_bom, return_response, validate_yelp_rating
 from ABC_BizEnrichment.common.logconfig import logger
 from core_app.models import AgentsInformation, FilingsInformation, LicenseOutput, PrincipalsInformation, YelpRestaurantRecord
+from django.contrib import admin, messages
 
+from merge_data.models import DataErichment
 # Genrating Data Set 1  Start ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # # Licens eOutput Records 
 @admin.register(LicenseOutput)
@@ -168,11 +172,11 @@ class AgentsInformationAdmin(BaseCSVImportAdmin):
         return importagentsinformation
 
 @admin.register(FilingsInformation)
-class FilingsInformationAdmin(BaseCSVImportAdmin):
+class FilingsInformationAdmin(CSVImportAdminMixin, admin.ModelAdmin):
     search_fields = ("filingsInformation_entity_num","filingsInformation_entity_name")
     list_display = ("id","filingsInformation_entity_num","filingsInformation_file_number", "filingsInformation_license_type", "filingsInformation_type_status", "filingsInformation_primary_name", "filingsInformation_jurisdiction")
     csv_import_url_name = "filingsinformation" 
-    PrincipalsInformationCoulmne = get_column_names(FilingsInformation,['id'], include_relations=True)
+    PrincipalsInformationCoulmne = get_column_names(FilingsInformation,['id'], include_relations=True) # type: ignore
     fieldsets = (
         ('Filings Information Record', {
             'fields': tuple(PrincipalsInformationCoulmne),
@@ -180,70 +184,91 @@ class FilingsInformationAdmin(BaseCSVImportAdmin):
     )
     def get_import_view(self):
         def importfilingsinformation(request):
-            mappings = {
-                'filingsInformation_license_type': lambda row: row['License_Type'],
-                'filingsInformation_file_number': lambda row: row['File_Number'],
-                'filingsInformation_lic_or_app': lambda row: row['Lic_or_App'],
-                'filingsInformation_type_status': lambda row: row['Type_Status'],
-                'filingsInformation_type_orig_iss_date': lambda row: parse_date(row['Type_Orig_Iss_Date']),
-                'filingsInformation_expir_date': lambda row: parse_date(row['Expir_Date']),
-                'filingsInformation_fee_codes': lambda row: row['Fee_Codes'],
-                'filingsInformation_dup_counts': lambda row: row['Dup_Counts'],
-                'filingsInformation_master_ind': lambda row: row['Master_Ind'],
-                'filingsInformation_term_in_number_of_months': lambda row: row['Term_in_#_of_Months'],
-                'filingsInformation_geo_code': lambda row: row['Geo_Code'],
-                'filingsInformation_district': lambda row: row['District'],
-                'filingsInformation_primary_name': lambda row: row['Primary_Name'],
-                'filingsInformation_prem_addr_1': lambda row: row['Prem_Addr_1'],
-                'filingsInformation_prem_addr_2': lambda row: row['Prem_Addr_2'],
-                'filingsInformation_prem_city': lambda row: row['Prem_City'],
-                'filingsInformation_prem_state': lambda row: row['Prem_State'],
-                'filingsInformation_prem_zip': lambda row: row['Prem_Zip'],
-                'filingsInformation_dba_name': lambda row: row['DBA_Name'],
-                'filingsInformation_mail_addr_1': lambda row: row['Mail_Addr_1'],
-                'filingsInformation_mail_addr_2': lambda row: row['Mail_Addr_2'],
-                'filingsInformation_mail_city': lambda row: row['Mail_City'],
-                'filingsInformation_mail_state': lambda row: row['Mail_State'],
-                'filingsInformation_mail_zip': lambda row: row['Mail_Zip'],
-                'filingsInformation_prem_county': lambda row: row['Prem_County'],
-                'filingsInformation_prem_census_tract': lambda row: row['Prem_Census_Tract_#'],
-                'filingsInformation_entity_name': lambda row: row['ENTITY_NAME'],
-                'filingsInformation_entity_num': lambda row: row['ENTITY_NUM'],
-                'filingsInformation_initial_filing_date': lambda row: parse_date(row['INITIAL_FILING_DATE']),
-                'filingsInformation_jurisdiction': lambda row: row['JURISDICTION'],
-                'filingsInformation_entity_status': lambda row: row['ENTITY_STATUS'],
-                'standing_sos': lambda row: row['STANDING_SOS'],
-                'filingsInformation_entity_type': lambda row: row['ENTITY_TYPE'],
-                'filingsInformation_filing_type': lambda row: row['FILING_TYPE'],
-                'filingsInformation_foreign_name': lambda row: row['FOREIGN_NAME'],
-                'filingsInformation_standing_ftb': lambda row: row['STANDING_FTB'],
-                'filingsInformation_standing_ftb': lambda row: row['STANDING_VCFCF'],
-                'filingsInformation_standing_vcfcf': lambda row: row['STANDING_AGENT'],
-                'filingsInformation_standing_agent': lambda row: row['STANDING_AGENT'],
-                'suspension_date': lambda row: parse_date(row['SUSPENSION_DATE']),
-                'filingsInformation_last_si_file_number': lambda row: row['LAST_SI_FILE_NUMBER'],
-                'filingsInformation_last_si_file_date': lambda row: parse_date(row['LAST_SI_FILE_DATE']),
-                'filingsInformation_principal_address': lambda row: row['PRINCIPAL_ADDRESS'],
-                'filingsInformation_principal_address2': lambda row: row['PRINCIPAL_ADDRESS2'],
-                'filingsInformation_principal_city': lambda row: row['PRINCIPAL_CITY'],
-                'filingsInformation_principal_state': lambda row: row['PRINCIPAL_STATE'],
-                'filingsInformation_principal_country': lambda row: row['PRINCIPAL_COUNTRY'],
-                'filingsInformation_principal_postal_code': lambda row: row['PRINCIPAL_POSTAL_CODE'],
-                'filingsInformation_mailing_address': lambda row: row['MAILING_ADDRESS'],
-                'filingsInformation_mailing_address2': lambda row: row['MAILING_ADDRESS2'],
-                'filingsInformation_mailing_city': lambda row: row['MAILING_CITY'],
-                'filingsInformation_mailing_state': lambda row: row['MAILING_STATE'],
-                'filingsInformation_mailing_country': lambda row: row['MAILING_COUNTRY'],
-                'filingsInformation_mailing_postal_code': lambda row: row['MAILING_POSTAL_CODE'],
-                'filingsInformation_principal_address_in_ca': lambda row: row['PRINCIPAL_ADDRESS_IN_CA'],
-                'filingsInformation_principal_address2_in_ca': lambda row: row['PRINCIPAL_ADDRESS2_IN_CA'],
-                'filingsInformation_principal_city_in_ca': lambda row: row['PRINCIPAL_CITY_IN_CA'],
-                'filingsInformation_principal_state_in_ca': lambda row: row['PRINCIPAL_STATE_IN_CA'],
-                'filingsInformation_principal_country_in_ca': lambda row: row['PRINCIPAL_COUNTRY_IN_CA'],
-                'filingsInformation_principal_postal_code_in_ca': lambda row: row['PRINCIPAL_POSTAL_CODE_IN_CA'],
-                'filingsInformation_llc_management_structure': lambda row: row['LLC_MANAGEMENT_STRUCTURE'],
-                'filingsInformation_type_of_business': lambda row: row['TYPE_OF_BUSINESS'],
-            }
-            return self.process_csv_import(request, FilingsInformation, mappings)
+            full_function_name = get_full_function_name()
+            if request.method != "POST":
+                return return_response(request, "admin/csv_form.html", context={"opts": self.model._meta, "form": CSVImportForm(), **self.admin_site.each_context(request)})
+            csv_file = remove_bom(request.FILES["csv_file"].file)
+            logger.info(f"{full_function_name}: Reading CSV file {request.FILES['csv_file']}...")
+            reader = csv.DictReader(csv_file)
+            batch_size = 1000
+            all_records = []
+            rows = list(reader)
+            for i in range(0, len(rows), batch_size):
+                logger.info(f"{full_function_name}: Total number of records in the {request.FILES} : {len(rows)}")
+                batch = rows[i:i + batch_size]
+                for row in batch:
+                    print(row['abc_license_number'])
+                    # dataset3records = DataErichment()
+                    # dataset3records.abc_license_number = row['abc_license_number']
+                
+                    break
+                break
+            self.message_user(request, "CSV imported successfully!", messages.SUCCESS)
+            return HttpResponseRedirect(f"/admin/core_app/filingsinformation/")
+            # mappings = {
+            #     'filingsInformation_license_type': lambda row: row['License_Type'],
+            #     'filingsInformation_file_number': lambda row: row['File_Number'],
+            #     'filingsInformation_lic_or_app': lambda row: row['Lic_or_App'],
+            #     'filingsInformation_type_status': lambda row: row['Type_Status'],
+            #     'filingsInformation_type_orig_iss_date': lambda row: parse_date(row['Type_Orig_Iss_Date']),
+            #     'filingsInformation_expir_date': lambda row: parse_date(row['Expir_Date']),
+            #     'filingsInformation_fee_codes': lambda row: row['Fee_Codes'],
+            #     'filingsInformation_dup_counts': lambda row: row['Dup_Counts'],
+            #     'filingsInformation_master_ind': lambda row: row['Master_Ind'],
+            #     'filingsInformation_term_in_number_of_months': lambda row: row['Term_in_#_of_Months'],
+            #     'filingsInformation_geo_code': lambda row: row['Geo_Code'],
+            #     'filingsInformation_district': lambda row: row['District'],
+            #     'filingsInformation_primary_name': lambda row: row['Primary_Name'],
+            #     'filingsInformation_prem_addr_1': lambda row: row['Prem_Addr_1'],
+            #     'filingsInformation_prem_addr_2': lambda row: row['Prem_Addr_2'],
+            #     'filingsInformation_prem_city': lambda row: row['Prem_City'],
+            #     'filingsInformation_prem_state': lambda row: row['Prem_State'],
+            #     'filingsInformation_prem_zip': lambda row: row['Prem_Zip'],
+            #     'filingsInformation_dba_name': lambda row: row['DBA_Name'],
+            #     'filingsInformation_mail_addr_1': lambda row: row['Mail_Addr_1'],
+            #     'filingsInformation_mail_addr_2': lambda row: row['Mail_Addr_2'],
+            #     'filingsInformation_mail_city': lambda row: row['Mail_City'],
+            #     'filingsInformation_mail_state': lambda row: row['Mail_State'],
+            #     'filingsInformation_mail_zip': lambda row: row['Mail_Zip'],
+            #     'filingsInformation_prem_county': lambda row: row['Prem_County'],
+            #     'filingsInformation_prem_census_tract': lambda row: row['Prem_Census_Tract_#'],
+            #     'filingsInformation_entity_name': lambda row: row['ENTITY_NAME'],
+            #     'filingsInformation_entity_num': lambda row: row['ENTITY_NUM'],
+            #     'filingsInformation_initial_filing_date': lambda row: parse_date(row['INITIAL_FILING_DATE']),
+            #     'filingsInformation_jurisdiction': lambda row: row['JURISDICTION'],
+            #     'filingsInformation_entity_status': lambda row: row['ENTITY_STATUS'],
+            #     'standing_sos': lambda row: row['STANDING_SOS'],
+            #     'filingsInformation_entity_type': lambda row: row['ENTITY_TYPE'],
+            #     'filingsInformation_filing_type': lambda row: row['FILING_TYPE'],
+            #     'filingsInformation_foreign_name': lambda row: row['FOREIGN_NAME'],
+            #     'filingsInformation_standing_ftb': lambda row: row['STANDING_FTB'],
+            #     'filingsInformation_standing_ftb': lambda row: row['STANDING_VCFCF'],
+            #     'filingsInformation_standing_vcfcf': lambda row: row['STANDING_AGENT'],
+            #     'filingsInformation_standing_agent': lambda row: row['STANDING_AGENT'],
+            #     'suspension_date': lambda row: parse_date(row['SUSPENSION_DATE']),
+            #     'filingsInformation_last_si_file_number': lambda row: row['LAST_SI_FILE_NUMBER'],
+            #     'filingsInformation_last_si_file_date': lambda row: parse_date(row['LAST_SI_FILE_DATE']),
+            #     'filingsInformation_principal_address': lambda row: row['PRINCIPAL_ADDRESS'],
+            #     'filingsInformation_principal_address2': lambda row: row['PRINCIPAL_ADDRESS2'],
+            #     'filingsInformation_principal_city': lambda row: row['PRINCIPAL_CITY'],
+            #     'filingsInformation_principal_state': lambda row: row['PRINCIPAL_STATE'],
+            #     'filingsInformation_principal_country': lambda row: row['PRINCIPAL_COUNTRY'],
+            #     'filingsInformation_principal_postal_code': lambda row: row['PRINCIPAL_POSTAL_CODE'],
+            #     'filingsInformation_mailing_address': lambda row: row['MAILING_ADDRESS'],
+            #     'filingsInformation_mailing_address2': lambda row: row['MAILING_ADDRESS2'],
+            #     'filingsInformation_mailing_city': lambda row: row['MAILING_CITY'],
+            #     'filingsInformation_mailing_state': lambda row: row['MAILING_STATE'],
+            #     'filingsInformation_mailing_country': lambda row: row['MAILING_COUNTRY'],
+            #     'filingsInformation_mailing_postal_code': lambda row: row['MAILING_POSTAL_CODE'],
+            #     'filingsInformation_principal_address_in_ca': lambda row: row['PRINCIPAL_ADDRESS_IN_CA'],
+            #     'filingsInformation_principal_address2_in_ca': lambda row: row['PRINCIPAL_ADDRESS2_IN_CA'],
+            #     'filingsInformation_principal_city_in_ca': lambda row: row['PRINCIPAL_CITY_IN_CA'],
+            #     'filingsInformation_principal_state_in_ca': lambda row: row['PRINCIPAL_STATE_IN_CA'],
+            #     'filingsInformation_principal_country_in_ca': lambda row: row['PRINCIPAL_COUNTRY_IN_CA'],
+            #     'filingsInformation_principal_postal_code_in_ca': lambda row: row['PRINCIPAL_POSTAL_CODE_IN_CA'],
+            #     'filingsInformation_llc_management_structure': lambda row: row['LLC_MANAGEMENT_STRUCTURE'],
+            #     'filingsInformation_type_of_business': lambda row: row['TYPE_OF_BUSINESS'],
+            # }
+            # return self.process_csv_import(request, FilingsInformation, mappings)
         return importfilingsinformation
 # # Genrating Data Set 2  End ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
