@@ -65,7 +65,7 @@ class UniqueLocationLicense(models.Model):
         return f"Unique Location License for {self.abc_license_number}"
 
 class LicenseeProfile(models.Model):
-    abc_license_number = models.ForeignKey(UniqueLocationLicense, on_delete=models.CASCADE, related_name='Licenserofileabc_license_number')
+    abc_license_number = models.TextField(null=True, blank=True)
     Company_Info_License_Number = models.TextField(null=True, blank=True)
     abc_business_address = models.TextField(null=True, blank=True)
     abc_county = models.TextField( null=True, blank=True)
@@ -143,7 +143,7 @@ class LicenseeProfile(models.Model):
 
 
 class AssociatedContactMapping(models.Model):
-    abc_license_number = models.ForeignKey('UniqueLocationLicense', on_delete=models.CASCADE, related_name='associated_abc_license_numbers')
+    abc_license_number = models.TextField(null=True, blank=True)
     Company_Info_License_Number = models.TextField(blank=True, null=True)
     Company_Info_Type = models.TextField(blank=True, null=True)  # Converted to TextField
     Company_Info_Name = models.TextField(blank=True, null=True)  # Converted to TextField
