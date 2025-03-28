@@ -1,39 +1,42 @@
-import time
 from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
 from tqdm import tqdm
 from ABC_BizEnrichment.common.helper_function import get_full_function_name
 from ABC_BizEnrichment.common.merge_data.helper_function import CustomMergeAdminMixin
 from core_app.models import CompanyInformationRecord
-from merge_data.models import DataErichmentWithoutConpanyInfo
+from merge_data.models import  DataErichmentFinalRecords, DataErichmentWithoutConpanyInfo
 from yelprecords.models import AssociatedContactMapping, LicenseeProfile, UniqueLocationLicense
 from ABC_BizEnrichment.common.logconfig import logger
 from import_export.admin import ExportMixin
 @admin.register(LicenseeProfile)
 class LicenseeProfileAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
     merge_url_name = "licenseeprofilerecords"
-    list_display = ("id", "Company_Info_License_Number", "abc_licensee")
-
+    list_display = ("id",)
+    def create_or_update_licensee_profile(self, abc_license_number, mapping):
+        obj, created = UniqueLocationLicense.objects.update_or_create( abc_license_number=abc_license_number,  defaults=mapping)
+        return obj, created
+    # search_fields = ['entity_name', 'licensee']  # Add more fields here if needed
     def get_merge_view(self):
         def DataSet3Recordmerge_view(request):
-            full_function_name = "DataSet3Recordmerge_view"
-            batch_size = 1000
-            dataerichment = DataErichmentWithoutConpanyInfo.objects.all()
-            total_data_count = dataerichment.count()
-            
-            licensee_profiles_to_create = []
-            associated_contacts_to_create = []
-            compab_info_data = {ai.Company_Info_License_Number: ai for ai in CompanyInformationRecord.objects.all()}
-            
-            for batch in tqdm(dataerichment, total=total_data_count, desc="Processing Data"):
-                abc_license_number = batch.abc_license_number
-                if not abc_license_number:
-                    continue
-                
-                matching_records = compab_info_data.get(abc_license_number)
-                LicenseeProfilemapping = {
+            full_function_name = get_full_function_name()
+            batch_size = 50
+            dataerichment = DataErichmentFinalRecords.objects.all()
+            total_dataerichment_count = dataerichment.count()
+            records_to_create = []
+            for i in tqdm(range(0, total_dataerichment_count, batch_size), desc="Processing Data", unit="batch"):
+                betchdataerichment = dataerichment[i:i + batch_size]
+                for batch in betchdataerichment:
+                    abc_license_number = str(batch.abc_license_number) 
+                    matching_second_records = CompanyInformationRecord.objects.filter(Company_Info_License_Number=abc_license_number)
+                    print('matching_second_records', matching_second_records.count())
+                    if matching_second_records:
+                        Company_Info_License_Number = matching_second_records[0].Company_Info_License_Number
+                    else:
+                        Company_Info_License_Number = ''
+                    print(f'Company_Info_License_Number ---->>>>>>>>> {Company_Info_License_Number}')
+                    LicenseeProfilemapping = {
                     'abc_licensee': batch.abc_licensee,
-                    'Company_Info_License_Number': batch.abc_license_number,
+                    'Company_Info_License_Number': Company_Info_License_Number,
                     'filingsInformation_entity_num': batch.filingsInformation_entity_num,
                     'abc_primary_name': batch.abc_primary_name,
                     'abc_dba_name':batch.abc_dba_name,
@@ -85,194 +88,132 @@ class LicenseeProfileAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
                     'filingsInformation_type_of_business':batch.filingsInformation_type_of_business,
                     'principalsInformation_entity_name':batch.principalsInformation_entity_name,
                     'principalsInformation_entity_num':batch.principalsInformation_entity_num
-                }
-
-                obj, created = UniqueLocationLicense.objects.update_or_create(abc_license_number=abc_license_number,defaults=LicenseeProfilemapping)
-                licensee_profiles_to_create.append(LicenseeProfile(
-                    abc_license_number=obj.abc_license_number,
-                    Company_Info_License_Number=obj.abc_license_number,
-                    abc_business_address=batch.abc_business_address,
-                    abc_county=batch.abc_county,
-                    abc_census_tract=batch.abc_census_tract,
-                    abc_licensee=batch.abc_licensee,
-                    abc_license_type_status=batch.abc_license_type_status,
-                    abc_status_date=batch.abc_status_date,
-                    abc_term=batch.abc_term,
-                    abc_original_issue_date=batch.abc_original_issue_date,
-                    abc_expiration_date=batch.abc_expiration_date,
-                    abc_master=batch.abc_master,
-                    abc_duplicate=batch.abc_duplicate,
-                    abc_fee_code=batch.abc_fee_code,
-                    abc_transfers=batch.abc_transfers,
-                    abc_conditions=batch.abc_conditions,
-                    abc_operating_restrictions=batch.abc_operating_restrictions,
-                    abc_disciplinary_action=batch.abc_disciplinary_action,
-                    abc_disciplinary_history=batch.abc_disciplinary_history,
-                    abc_holds=batch.abc_holds,
-                    abc_escrows=batch.abc_escrows,
-                    abc_from_license_number=batch.abc_from_license_number,
-                    abc_transferred_on=batch.abc_transferred_on,
-                    abc_to_license_number=batch.abc_to_license_number,
-                    abc_transferred_on2=batch.abc_transferred_on2,
-                    abc_license_type=batch.abc_license_type,
-                    abc_file_number=batch.abc_file_number,
-                    abc_lic_or_app=batch.abc_lic_or_app,
-                    abc_type_status=batch.abc_type_status,
-                    abc_type_orig_iss_date=batch.abc_type_orig_iss_date,
-                    abc_expir_date=batch.abc_expir_date,
-                    abc_fee_codes=batch.abc_fee_codes,
-                    abc_dup_counts=batch.abc_dup_counts,
-                    abc_master_ind=batch.abc_master_ind,
-                    abc_term_in_number_of_months=batch.abc_term_in_number_of_months,
-                    abc_geo_code=batch.abc_geo_code,
-                    abc_district=batch.abc_district,
-                    abc_primary_name=batch.abc_primary_name,
-                    abc_prem_addr_1=batch.abc_prem_addr_1,
-                    abc_prem_addr_2=batch.abc_prem_addr_2,
-                    abc_prem_city=batch.abc_prem_city,
-                    abc_prem_state=batch.abc_prem_state,
-                    abc_prem_zip=batch.abc_prem_zip,
-                    abc_dba_name=batch.abc_dba_name,
-                    abc_prem_county=batch.abc_prem_county,
-                    # abc_prem_census_tract = batch.abc_prem_census_tract
-                    google_business_name=batch.google_business_name,
-                    google_business_address=batch.google_business_address,
-                    google_place_name=batch.google_place_name,
-                    google_rating=batch.google_rating,
-                    google_phone_number=batch.google_phone_number,
-                    google_website=batch.google_website,
-                    google_types=batch.google_types,
-                    google_business_status=batch.google_business_status,
-                    yelp_file_number=batch.yelp_file_number,
-                    yelp_license_type=batch.yelp_license_type,
-                    yelp_primary_name=batch.yelp_primary_name,
-                    yelp_dba_name=batch.yelp_dba_name,
-                    yelp_prem_addr_1=batch.yelp_prem_addr_1,
-                    yelp_prem_addr_2=batch.yelp_prem_addr_2,
-                    yelp_prem_city=batch.yelp_prem_city,
-                    yelp_prem_state=batch.yelp_prem_state,
-                    yelp_prem_zip=batch.yelp_prem_zip,
-                    yelp_link=batch.yelp_link,
-                    yelp_name=batch.yelp_name,
-                    yelp_phone=batch.yelp_phone,
-                    yelp_web_site=batch.yelp_web_site,
-                    yelp_rating=batch.yelp_rating,
-                    output_license_file_status=bool(batch.output_license_file_status),
-                    yelp_file_status=bool(batch.yelp_file_status),
-                    filingsInformation_entity_num=batch.filingsInformation_entity_num,
-                ))
-
-                # Handling matching_records, which can be a single record or iterable
-                if matching_records:
-                    # If it's a queryset/list, iterate over it
-                    if isinstance(matching_records, list):  # or check if it's a queryset type
-                        for record in matching_records:
-                            associated_contacts_to_create.append(AssociatedContactMapping(
-                                abc_license_number=obj.Company_Info_License_Number,
-                                Company_Info_License_Number=obj.Company_Info_License_Number,
-                                Company_Info_Type=record.Company_Info_Type,
-                                Company_Info_Name=record.Company_Info_Name,
-                                Company_Info_Role=record.Company_Info_Role,
-                                agentsInformation_entity_num=batch.agentsInformation_entity_num,
-                                agentsInformation_org_name=batch.agentsInformation_org_name,
-                                agentsInformation_first_name=batch.agentsInformation_first_name,
-                                agentsInformation_middle_name=batch.agentsInformation_middle_name,
-                                agentsInformation_last_name=batch.agentsInformation_last_name,
-                                agentsInformation_physical_address1=batch.agentsInformation_physical_address1,
-                                agentsInformation_physical_address2=batch.agentsInformation_physical_address2,
-                                agentsInformation_physical_address3=batch.agentsInformation_physical_address3,
-                                agentsInformation_physical_city=batch.agentsInformation_physical_city,
-                                agentsInformation_physical_state=batch.agentsInformation_physical_state,
-                                agentsInformation_physical_country=batch.agentsInformation_physical_country,
-                                agentsInformation_physical_postal_code=batch.agentsInformation_physical_postal_code,
-                                agentsInformation_agent_type=batch.agentsInformation_agent_type,
-                                filingsInformation_entity_num=batch.filingsInformation_entity_num,
-                                principalsInformation_entity_num=batch.principalsInformation_entity_num,
-                                principalsInformation_org_name=batch.principalsInformation_org_name,
-                                principalsInformation_first_name=batch.principalsInformation_first_name,
-                                principalsInformation_middle_name=batch.principalsInformation_middle_name,
-                                principalsInformation_last_name=batch.principalsInformation_last_name,
-                                principalsInformation_address1=batch.principalsInformation_address1,
-                                principalsInformation_address2=batch.principalsInformation_address2,
-                                principalsInformation_address3=batch.principalsInformation_address3,
-                                principalsInformation_city=batch.principalsInformation_city,
-                                principalsInformation_state=batch.principalsInformation_state,
-                                principalsInformation_country=batch.principalsInformation_country,
-                                principalsInformation_postal_code=batch.principalsInformation_postal_code,
-                                principalsInformation_position_1=batch.principalsInformation_position_1,
-                                principalsInformation_position_2=batch.principalsInformation_position_2,
-                                principalsInformation_position_3=batch.principalsInformation_position_3,
-                                principalsInformation_position_4=batch.principalsInformation_position_4,
-                                principalsInformation_position_5=batch.principalsInformation_position_5,
-                                principalsInformation_position_6=batch.principalsInformation_position_6,
-                                principalsInformation_position_7=batch.principalsInformation_position_7,
-                                filling_information_file_status=bool(batch.filling_information_file_status),
-                                principal_information_file_status=bool(batch.principal_information_file_status),
-                                agentsInformation_file_status=bool(batch.agentsInformation_file_status),
-                                data_set_1_file_status=bool(batch.data_set_1_file_status),
-                                data_set_2_file_status=bool(batch.data_set_2_file_status),
-                            ))
-                    else:
-                        # If it's a single record, process it directly
-                        record = matching_records
-                        associated_contacts_to_create.append(AssociatedContactMapping(
-                            abc_license_number=obj.Company_Info_License_Number,
-                            Company_Info_License_Number=obj.Company_Info_License_Number,
-                            Company_Info_Type=record.Company_Info_Type,
-                            Company_Info_Name=record.Company_Info_Name,
-                            Company_Info_Role=record.Company_Info_Role,
-                            agentsInformation_entity_num=batch.agentsInformation_entity_num,
-                            agentsInformation_org_name=batch.agentsInformation_org_name,
-                            agentsInformation_first_name=batch.agentsInformation_first_name,
-                            agentsInformation_middle_name=batch.agentsInformation_middle_name,
-                            agentsInformation_last_name=batch.agentsInformation_last_name,
-                            agentsInformation_physical_address1=batch.agentsInformation_physical_address1,
-                            agentsInformation_physical_address2=batch.agentsInformation_physical_address2,
-                            agentsInformation_physical_address3=batch.agentsInformation_physical_address3,
-                            agentsInformation_physical_city=batch.agentsInformation_physical_city,
-                            agentsInformation_physical_state=batch.agentsInformation_physical_state,
-                            agentsInformation_physical_country=batch.agentsInformation_physical_country,
-                            agentsInformation_physical_postal_code=batch.agentsInformation_physical_postal_code,
-                            agentsInformation_agent_type=batch.agentsInformation_agent_type,
-                            filingsInformation_entity_num=batch.filingsInformation_entity_num,
-                            principalsInformation_entity_num=batch.principalsInformation_entity_num,
-                            principalsInformation_org_name=batch.principalsInformation_org_name,
-                            principalsInformation_first_name=batch.principalsInformation_first_name,
-                            principalsInformation_middle_name=batch.principalsInformation_middle_name,
-                            principalsInformation_last_name=batch.principalsInformation_last_name,
-                            principalsInformation_address1=batch.principalsInformation_address1,
-                            principalsInformation_address2=batch.principalsInformation_address2,
-                            principalsInformation_address3=batch.principalsInformation_address3,
-                            principalsInformation_city=batch.principalsInformation_city,
-                            principalsInformation_state=batch.principalsInformation_state,
-                            principalsInformation_country=batch.principalsInformation_country,
-                            principalsInformation_postal_code=batch.principalsInformation_postal_code,
-                            principalsInformation_position_1=batch.principalsInformation_position_1,
-                            principalsInformation_position_2=batch.principalsInformation_position_2,
-                            principalsInformation_position_3=batch.principalsInformation_position_3,
-                            principalsInformation_position_4=batch.principalsInformation_position_4,
-                            principalsInformation_position_5=batch.principalsInformation_position_5,
-                            principalsInformation_position_6=batch.principalsInformation_position_6,
-                            principalsInformation_position_7=batch.principalsInformation_position_7,
-                            filling_information_file_status=bool(batch.filling_information_file_status),
-                            principal_information_file_status=bool(batch.principal_information_file_status),
-                            agentsInformation_file_status=bool(batch.agentsInformation_file_status),
-                            data_set_1_file_status=bool(batch.data_set_1_file_status),
-                            data_set_2_file_status=bool(batch.data_set_2_file_status),
-                        ))
-
-                if len(licensee_profiles_to_create) >= batch_size:
-                    LicenseeProfile.objects.bulk_create(licensee_profiles_to_create, ignore_conflicts=True)
-                    AssociatedContactMapping.objects.bulk_create(associated_contacts_to_create, ignore_conflicts=True)
-                    licensee_profiles_to_create.clear()
-                    associated_contacts_to_create.clear()
-                    time.sleep(2)  # Optional delay to prevent overloading DB
-            if licensee_profiles_to_create:
-                LicenseeProfile.objects.bulk_create(licensee_profiles_to_create, ignore_conflicts=True)
-            if associated_contacts_to_create:
-                AssociatedContactMapping.objects.bulk_create(associated_contacts_to_create, ignore_conflicts=True)
-            message = "Data Sync Process Successfully"
+                    }
+                    obj, created = UniqueLocationLicense.objects.update_or_create( abc_license_number=abc_license_number,  defaults=LicenseeProfilemapping)
+                    new_LicenseeProfile = LicenseeProfile()
+                    new_LicenseeProfile.abc_license_number = abc_license_number
+                    new_LicenseeProfile.Company_Info_License_Number = Company_Info_License_Number
+                    new_LicenseeProfile.abc_business_address = batch.abc_business_address
+                    new_LicenseeProfile.abc_county = batch.abc_county
+                    new_LicenseeProfile.abc_census_tract = batch.abc_census_tract
+                    new_LicenseeProfile.abc_licensee = batch.abc_licensee
+                    new_LicenseeProfile.abc_license_type = batch.abc_license_type
+                    new_LicenseeProfile.abc_license_type_status = batch.abc_license_type_status
+                    new_LicenseeProfile.abc_status_date = batch.abc_status_date
+                    new_LicenseeProfile.abc_term = batch.abc_term
+                    new_LicenseeProfile.abc_original_issue_date = batch.abc_original_issue_date
+                    new_LicenseeProfile.abc_expiration_date = batch.abc_expiration_date
+                    new_LicenseeProfile.abc_master = batch.abc_master
+                    new_LicenseeProfile.abc_duplicate = batch.abc_duplicate
+                    new_LicenseeProfile.abc_fee_code = batch.abc_fee_code
+                    new_LicenseeProfile.abc_transfers = batch.abc_transfers
+                    new_LicenseeProfile.abc_conditions = batch.abc_conditions
+                    new_LicenseeProfile.abc_operating_restrictions = batch.abc_operating_restrictions
+                    new_LicenseeProfile.abc_disciplinary_action = batch.abc_disciplinary_action
+                    new_LicenseeProfile.abc_disciplinary_history = batch.abc_disciplinary_history
+                    new_LicenseeProfile.abc_holds = batch.abc_holds
+                    new_LicenseeProfile.abc_escrows = batch.abc_escrows
+                    new_LicenseeProfile.abc_from_license_number = batch.abc_from_license_number
+                    new_LicenseeProfile.abc_transferred_on = batch.abc_transferred_on
+                    new_LicenseeProfile.abc_to_license_number = batch.abc_to_license_number
+                    new_LicenseeProfile.abc_transferred_on2 = batch.abc_transferred_on2
+                    new_LicenseeProfile.abc_license_type = batch.abc_license_type
+                    new_LicenseeProfile.abc_file_number = batch.abc_file_number
+                    new_LicenseeProfile.abc_lic_or_app = batch.abc_lic_or_app
+                    new_LicenseeProfile.abc_type_status = batch.abc_type_status
+                    new_LicenseeProfile.abc_type_orig_iss_date = batch.abc_type_orig_iss_date
+                    new_LicenseeProfile.abc_expir_date = batch.abc_expir_date
+                    new_LicenseeProfile.abc_fee_codes = batch.abc_fee_codes
+                    new_LicenseeProfile.abc_dup_counts = batch.abc_dup_counts
+                    new_LicenseeProfile.abc_master_ind = batch.abc_master_ind
+                    new_LicenseeProfile.abc_term_in_number_of_months = batch.abc_term_in_number_of_months
+                    new_LicenseeProfile.abc_geo_code = batch.abc_geo_code
+                    new_LicenseeProfile.abc_district = batch.abc_district
+                    new_LicenseeProfile.abc_primary_name = batch.abc_primary_name
+                    new_LicenseeProfile.abc_prem_addr_1 = batch.abc_prem_addr_1
+                    new_LicenseeProfile.abc_prem_addr_2 = batch.abc_prem_addr_2
+                    new_LicenseeProfile.abc_prem_city = batch.abc_prem_city
+                    new_LicenseeProfile.abc_prem_state = batch.abc_prem_state
+                    new_LicenseeProfile.abc_prem_zip = batch.abc_prem_zip
+                    new_LicenseeProfile.abc_dba_name = batch.abc_dba_name
+                    new_LicenseeProfile.abc_prem_county = batch.abc_prem_county
+                    new_LicenseeProfile.google_business_name = batch.google_business_name
+                    new_LicenseeProfile.google_business_address = batch.google_business_address
+                    new_LicenseeProfile.google_place_name = batch.google_place_name
+                    new_LicenseeProfile.google_rating = batch.google_rating
+                    new_LicenseeProfile.google_phone_number = batch.google_phone_number
+                    new_LicenseeProfile.google_website = batch.google_website
+                    new_LicenseeProfile.google_types = batch.google_types
+                    new_LicenseeProfile.google_business_status = batch.google_business_status
+                    new_LicenseeProfile.yelp_file_number = batch.yelp_file_number
+                    new_LicenseeProfile.yelp_license_type = batch.yelp_license_type
+                    new_LicenseeProfile.yelp_primary_name = batch.yelp_primary_name
+                    new_LicenseeProfile.yelp_dba_name = batch.yelp_dba_name
+                    new_LicenseeProfile.yelp_prem_addr_1 = batch.yelp_prem_addr_1
+                    new_LicenseeProfile.yelp_prem_addr_2 = batch.yelp_prem_addr_2
+                    new_LicenseeProfile.yelp_prem_city = batch.yelp_prem_city
+                    new_LicenseeProfile.yelp_prem_state = batch.yelp_prem_state
+                    new_LicenseeProfile.yelp_prem_zip = batch.yelp_prem_zip
+                    new_LicenseeProfile.yelp_link = batch.yelp_link
+                    new_LicenseeProfile.yelp_name = batch.yelp_name
+                    new_LicenseeProfile.yelp_phone = batch.yelp_phone
+                    new_LicenseeProfile.yelp_web_site = batch.yelp_web_site
+                    new_LicenseeProfile.yelp_rating = batch.yelp_rating
+                    new_LicenseeProfile.output_license_file_status =  bool(batch.output_license_file_status)
+                    new_LicenseeProfile.yelp_file_status = bool(batch.yelp_file_status)
+                    new_LicenseeProfile.filingsInformation_entity_num = batch.filingsInformation_entity_num
+                    new_LicenseeProfile.save()
+                    if matching_second_records:
+                        for rec in matching_second_records:
+                            new_AssociatedContactMapping= AssociatedContactMapping()
+                            new_AssociatedContactMapping.abc_license_number = abc_license_number
+                            new_AssociatedContactMapping.Company_Info_License_Number = rec.Company_Info_Type
+                            new_AssociatedContactMapping.Company_Info_Type = rec.Company_Info_Type
+                            new_AssociatedContactMapping.Company_Info_Name = rec.Company_Info_Name
+                            new_AssociatedContactMapping.Company_Info_Role = rec.Company_Info_Role
+                            new_AssociatedContactMapping.agentsInformation_entity_num = batch.agentsInformation_entity_num
+                            new_AssociatedContactMapping.agentsInformation_org_name = batch.agentsInformation_org_name
+                            new_AssociatedContactMapping.agentsInformation_first_name = batch.agentsInformation_first_name
+                            new_AssociatedContactMapping.agentsInformation_middle_name = batch.agentsInformation_middle_name
+                            new_AssociatedContactMapping.agentsInformation_last_name = batch.agentsInformation_last_name
+                            new_AssociatedContactMapping.agentsInformation_physical_address1 = batch.agentsInformation_physical_address1
+                            new_AssociatedContactMapping.agentsInformation_physical_address2 = batch.agentsInformation_physical_address2
+                            new_AssociatedContactMapping.agentsInformation_physical_address3 = batch.agentsInformation_physical_address3
+                            new_AssociatedContactMapping.agentsInformation_physical_city = batch.agentsInformation_physical_city
+                            new_AssociatedContactMapping.agentsInformation_physical_state = batch.agentsInformation_physical_state
+                            new_AssociatedContactMapping.agentsInformation_physical_country = batch.agentsInformation_physical_country
+                            new_AssociatedContactMapping.agentsInformation_physical_postal_code = batch.agentsInformation_physical_postal_code
+                            new_AssociatedContactMapping.agentsInformation_agent_type = batch.agentsInformation_agent_type
+                            new_AssociatedContactMapping.filingsInformation_entity_num = batch.filingsInformation_entity_num
+                            new_AssociatedContactMapping.principalsInformation_entity_num = batch.principalsInformation_entity_num
+                            new_AssociatedContactMapping.principalsInformation_org_name = batch.principalsInformation_org_name
+                            new_AssociatedContactMapping.principalsInformation_first_name = batch.principalsInformation_first_name
+                            new_AssociatedContactMapping.principalsInformation_middle_name = batch.principalsInformation_middle_name
+                            new_AssociatedContactMapping.principalsInformation_last_name = batch.principalsInformation_last_name
+                            new_AssociatedContactMapping.principalsInformation_address1 = batch.principalsInformation_address1
+                            new_AssociatedContactMapping.principalsInformation_address2 = batch.principalsInformation_address2
+                            new_AssociatedContactMapping.principalsInformation_address3 = batch.principalsInformation_address3
+                            new_AssociatedContactMapping.principalsInformation_city = batch.principalsInformation_city
+                            new_AssociatedContactMapping.principalsInformation_state = batch.principalsInformation_state
+                            new_AssociatedContactMapping.principalsInformation_country = batch.principalsInformation_country
+                            new_AssociatedContactMapping.principalsInformation_postal_code = batch.principalsInformation_postal_code
+                            new_AssociatedContactMapping.principalsInformation_position_1 = batch.principalsInformation_position_1
+                            new_AssociatedContactMapping.principalsInformation_position_2 = batch.principalsInformation_position_2
+                            new_AssociatedContactMapping.principalsInformation_position_3 = batch.principalsInformation_position_3
+                            new_AssociatedContactMapping.principalsInformation_position_4 = batch.principalsInformation_position_4
+                            new_AssociatedContactMapping.principalsInformation_position_5 = batch.principalsInformation_position_5
+                            new_AssociatedContactMapping.principalsInformation_position_6 = batch.principalsInformation_position_6
+                            new_AssociatedContactMapping.principalsInformation_position_7 = batch.principalsInformation_position_7
+                            new_AssociatedContactMapping.filling_information_file_status = bool(batch.filling_information_file_status)
+                            new_AssociatedContactMapping.principal_information_file_status = bool(batch.principal_information_file_status)
+                            new_AssociatedContactMapping.agentsInformation_file_status = bool(batch.agentsInformation_file_status)
+                            new_AssociatedContactMapping.data_set_1_file_status = bool(batch.data_set_1_file_status)
+                            new_AssociatedContactMapping.data_set_2_file_status = bool(batch.data_set_2_file_status)
+                            new_AssociatedContactMapping.save()
+                    # break
+                # break
+            message = 'Data Sync Process Successfully'
             logger.info(f"{full_function_name}: {message}")
             self.message_user(request, message, messages.SUCCESS)
             return HttpResponseRedirect("/admin/yelprecords/licenseeprofile/")
-        return DataSet3Recordmerge_view
+        return DataSet3Recordmerge_view     

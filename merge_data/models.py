@@ -175,20 +175,21 @@ class DataSet2Record(models.Model):
 class DataErichmentWithoutConpanyInfo(models.Model):
 # Data Set 1 
     abc_license_number = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_business_address = models.TextField( null=True, blank=True)
-
+    yelp_file_number = models.TextField(blank=True, null=True) 
+# License Output
     abc_primary_owner = models.TextField( null=True, blank=True)
     abc_office_of_application = models.TextField( null=True, blank=True)
     abc_business_name = models.TextField( null=True, blank=True)
+    abc_business_address = models.TextField( null=True, blank=True)
     abc_county = models.TextField( null=True, blank=True)
     abc_census_tract = models.TextField(blank=True, null=True)
     abc_licensee = models.TextField(null=True, blank=True)
     abc_license_type = models.TextField( null=True, blank=True)
     abc_license_type_status = models.TextField( null=True, blank=True)
-    abc_status_date = models.TextField(null=True, blank=True)
+    abc_status_date = models.DateField(null=True, blank=True)
     abc_term = models.TextField( null=True, blank=True)
-    abc_original_issue_date = models.TextField(null=True, blank=True)
-    abc_expiration_date = models.TextField(null=True, blank=True)
+    abc_original_issue_date = models.DateField(null=True, blank=True)
+    abc_expiration_date = models.DateField(null=True, blank=True)
     abc_master = models.TextField( null=True, blank=True)
     abc_duplicate = models.BooleanField(default=False, null=True, blank=True)
     abc_fee_code = models.TextField( null=True, blank=True)
@@ -200,34 +201,9 @@ class DataErichmentWithoutConpanyInfo(models.Model):
     abc_holds = models.TextField(null=True, blank=True, default="No Active Holds found")
     abc_escrows = models.TextField(null=True, blank=True, default="No Escrow found")
     abc_from_license_number = models.TextField( null=True, blank=True)
-    abc_transferred_on = models.TextField(null=True, blank=True)
+    abc_transferred_on = models.DateField(null=True, blank=True)
     abc_to_license_number = models.TextField( null=True, blank=True)
-    abc_transferred_on2 = models.TextField(null=True, blank=True)
-    abc_license_type = models.TextField(null=True, blank=True)
-    abc_file_number = models.TextField(null=True, blank=True)
-    abc_lic_or_app = models.TextField(null=True, blank=True)
-    abc_type_status = models.TextField(null=True, blank=True)
-    abc_type_orig_iss_date = models.TextField(null=True, blank=True)
-    abc_expir_date = models.TextField(null=True, blank=True)
-    abc_fee_codes = models.TextField(null=True, blank=True)
-    abc_dup_counts = models.TextField(null=True, blank=True)
-    abc_master_ind = models.TextField(null=True, blank=True)
-    abc_term_in_number_of_months = models.TextField(null=True, blank=True)
-    abc_geo_code = models.TextField(null=True, blank=True)
-    abc_district = models.TextField(null=True, blank=True)
-    abc_primary_name = models.TextField(null=True, blank=True)
-    abc_prem_addr_1 = models.TextField(null=True, blank=True)
-    abc_prem_addr_2 = models.TextField(null=True, blank=True)
-    abc_prem_city = models.TextField(null=True, blank=True)
-    abc_prem_state = models.TextField(null=True, blank=True)
-    abc_prem_zip = models.TextField(null=True, blank=True)
-    abc_dba_name = models.TextField(null=True, blank=True)
-    abc_mail_addr_1 = models.TextField(null=True, blank=True)
-    abc_mail_addr_2 = models.TextField(null=True, blank=True)
-    abc_mail_city = models.TextField(null=True, blank=True)
-    abc_mail_state = models.TextField(null=True, blank=True)
-    abc_mail_zip = models.TextField(null=True, blank=True)
-    abc_prem_county = models.TextField(null=True, blank=True)
+    abc_transferred_on2 = models.DateField(null=True, blank=True)
     # Data Scrapp From Google API
     google_business_name = models.TextField( null=True, blank=True)
     google_business_address = models.TextField( null=True, blank=True)
@@ -237,8 +213,7 @@ class DataErichmentWithoutConpanyInfo(models.Model):
     google_website = models.TextField(null=True, blank=True)
     google_types = models.TextField( null=True, blank=True)
     google_business_status = models.TextField( null=True, blank=True)
-    # Yelp Restaurant Record
-    yelp_file_number = models.TextField(blank=True, null=True) 
+# Yelp Restaurant Record
     yelp_license_type = models.TextField(blank=True, null=True)
     yelp_primary_name = models.TextField(blank=True, null=True)
     yelp_dba_name = models.TextField(blank=True, null=True)
@@ -252,10 +227,10 @@ class DataErichmentWithoutConpanyInfo(models.Model):
     yelp_phone = models.TextField( blank=True, null=True)
     yelp_web_site = models.TextField(blank=True, null=True) 
     yelp_rating = models.TextField( blank=True, null=True)
-    # Additional Fields
+# Additional Fields
+
     output_license_file_status = models.BooleanField(default=False)
     yelp_file_status = models.BooleanField(default=False)
- # Data Set 2
     agentsInformation_entity_name =  models.TextField(blank=True, null=True)
     agentsInformation_entity_num = models.TextField(blank=True, null=True)
     agentsInformation_org_name = models.TextField(blank=True, null=True)
@@ -270,10 +245,36 @@ class DataErichmentWithoutConpanyInfo(models.Model):
     agentsInformation_physical_country = models.TextField(blank=True, null=True)
     agentsInformation_physical_postal_code = models.TextField(max_length=20,blank=True, null=True)
     agentsInformation_agent_type = models.TextField(blank=True, null=True)
-    # Filings Information Records
+# Filings Information Records
+    filingsInformation_license_type = models.TextField(blank=True, null=True)  # Converted to TextField
+    filingsInformation_file_number = models.TextField(blank=True, null=True)  # Converted to TextField
+    filingsInformation_lic_or_app = models.TextField(blank=True, null=True)  # Converted to TextField
+    filingsInformation_type_status = models.TextField(blank=True, null=True)  # Converted to TextField
+    filingsInformation_type_orig_iss_date = models.DateField(blank=True, null=True)
+    filingsInformation_expir_date = models.DateField(blank=True, null=True)
+    filingsInformation_fee_codes = models.TextField(blank=True, null=True)  # Converted to TextField
+    filingsInformation_dup_counts = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    filingsInformation_master_ind = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    filingsInformation_term_in_number_of_months = models.IntegerField(blank=True, null=True)
+    filingsInformation_geo_code = models.TextField( blank=True, null=True)
+    filingsInformation_district = models.TextField(blank=True, null=True)
+    filingsInformation_primary_name = models.TextField(blank=True, null=True)  # Converted to TextField
+    filingsInformation_prem_addr_1 = models.TextField(blank=True, null=True)
+    filingsInformation_prem_addr_2 = models.TextField(blank=True, null=True)
+    filingsInformation_prem_city = models.TextField(blank=True, null=True)
+    filingsInformation_prem_state = models.TextField(blank=True, null=True)
+    filingsInformation_prem_zip = models.TextField(blank=True, null=True)
+    filingsInformation_dba_name = models.TextField( blank=True, null=True)
+    filingsInformation_mail_addr_1 = models.TextField(blank=True, null=True)
+    filingsInformation_mail_addr_2 = models.TextField( blank=True, null=True)
+    filingsInformation_mail_city = models.TextField(blank=True, null=True)  
+    filingsInformation_mail_state = models.TextField(blank=True, null=True)
+    filingsInformation_mail_zip = models.TextField(blank=True, null=True)
+    filingsInformation_prem_county = models.TextField( blank=True, null=True)
+    filingsInformation_prem_census_tract = models.TextField( blank=True, null=True)
     filingsInformation_entity_name = models.TextField(blank=True, null=True)
     filingsInformation_entity_num = models.TextField( blank=True, null=True)
-    filingsInformation_initial_filing_date = models.TextField(blank=True, null=True)
+    filingsInformation_initial_filing_date = models.DateField(blank=True, null=True)
     filingsInformation_jurisdiction = models.TextField(max_length=60,blank=True, null=True)
     filingsInformation_entity_status = models.TextField( max_length=20,blank=True, null=True)
     filingsInformation_standing_sos = models.TextField( max_length=20,blank=True, null=True)
@@ -283,9 +284,9 @@ class DataErichmentWithoutConpanyInfo(models.Model):
     filingsInformation_standing_ftb = models.TextField( blank=True, null=True)
     filingsInformation_standing_vcfcf = models.TextField(blank=True, null=True)
     filingsInformation_standing_agent = models.TextField(blank=True, null=True)
-    filingsInformation_suspension_date = models.TextField(blank=True, null=True)
+    filingsInformation_suspension_date = models.DateField(blank=True, null=True)
     filingsInformation_last_si_file_number = models.TextField(max_length=70, blank=True, null=True)
-    filingsInformation_last_si_file_date = models.TextField(blank=True, null=True)
+    filingsInformation_last_si_file_date = models.DateField(blank=True, null=True)
     filingsInformation_principal_address = models.TextField( blank=True, null=True)
     filingsInformation_principal_address2 = models.TextField( blank=True, null=True)
     filingsInformation_principal_city = models.TextField( blank=True, null=True)
@@ -307,7 +308,7 @@ class DataErichmentWithoutConpanyInfo(models.Model):
     filingsInformation_principal_postal_code_in_ca= models.TextField( blank=True, null=True)
     filingsInformation_llc_management_structure = models.TextField( blank=True, null=True)
     filingsInformation_type_of_business = models.TextField( blank=True, null=True)
-    # Principals Information Records
+# Principals Information Records
     principalsInformation_entity_name = models.TextField(blank=True, null=True)
     principalsInformation_entity_num = models.TextField(blank=True, null=True)
     principalsInformation_org_name = models.TextField(blank=True, null=True)
@@ -338,20 +339,10 @@ class DataErichmentWithoutConpanyInfo(models.Model):
     def __str__(self):
         return f"Generate Data Erichment Records for {self.principalsInformation_entity_name}"
     
-class DataErichmentWithConpanyInfo(models.Model):
-# Data Set 1 
-    # Company Informations Data 
-    Company_Info_License_Number = models.TextField(blank=True, null=True)  # Converted to TextField
-    Company_Info_Type = models.TextField(blank=True, null=True)  # Converted to TextField
-    Company_Info_Name = models.TextField(blank=True, null=True)  # Converted to TextField
-    Company_Info_Role = models.TextField(blank=True, null=True)  # Converted to TextField
-    # License Output
+class DataErichmentFinalRecords(models.Model):
     abc_license_number = models.TextField(blank=True, null=True)  # Converted to TextField
     abc_business_address = models.TextField( null=True, blank=True)
-
-    abc_primary_owner = models.TextField( null=True, blank=True)
-    abc_office_of_application = models.TextField( null=True, blank=True)
-    abc_business_name = models.TextField( null=True, blank=True)
+    yelp_file_number = models.TextField( null=True, blank=True)
     abc_county = models.TextField( null=True, blank=True)
     abc_census_tract = models.TextField(blank=True, null=True)
     abc_licensee = models.TextField(null=True, blank=True)
@@ -375,32 +366,32 @@ class DataErichmentWithConpanyInfo(models.Model):
     abc_transferred_on = models.TextField(null=True, blank=True)
     abc_to_license_number = models.TextField( null=True, blank=True)
     abc_transferred_on2 = models.TextField(null=True, blank=True)
-    abc_license_type = models.TextField(null=True, blank=True)
-    abc_file_number = models.TextField(null=True, blank=True)
-    abc_lic_or_app = models.TextField(null=True, blank=True)
-    abc_type_status = models.TextField(null=True, blank=True)
-    abc_type_orig_iss_date = models.TextField(null=True, blank=True)
-    abc_expir_date = models.TextField(null=True, blank=True)
-    abc_fee_codes = models.TextField(null=True, blank=True)
-    abc_dup_counts = models.TextField(null=True, blank=True)
-    abc_master_ind = models.TextField(null=True, blank=True)
-    abc_term_in_number_of_months = models.TextField(null=True, blank=True)
-    abc_geo_code = models.TextField(null=True, blank=True)
-    abc_district = models.TextField(null=True, blank=True)
-    abc_primary_name = models.TextField(null=True, blank=True)
-    abc_prem_addr_1 = models.TextField(null=True, blank=True)
-    abc_prem_addr_2 = models.TextField(null=True, blank=True)
-    abc_prem_city = models.TextField(null=True, blank=True)
-    abc_prem_state = models.TextField(null=True, blank=True)
-    abc_prem_zip = models.TextField(null=True, blank=True)
-    abc_dba_name = models.TextField(null=True, blank=True)
-    abc_mail_addr_1 = models.TextField(null=True, blank=True)
-    abc_mail_addr_2 = models.TextField(null=True, blank=True)
-    abc_mail_city = models.TextField(null=True, blank=True)
-    abc_mail_state = models.TextField(null=True, blank=True)
-    abc_mail_zip = models.TextField(null=True, blank=True)
-    abc_prem_county = models.TextField(null=True, blank=True)
-    # Data Scrapp From Google API
+    abc_license_type = models.TextField( null=True, blank=True)
+    abc_file_number = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_lic_or_app = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_type_status = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_type_orig_iss_date = models.TextField(blank=True, null=True)
+    abc_expir_date = models.TextField(blank=True, null=True)
+    abc_fee_codes = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_dup_counts = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    abc_master_ind = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    abc_term_in_number_of_months = models.TextField(blank=True, null=True)
+    abc_geo_code = models.TextField( blank=True, null=True)
+    abc_district = models.TextField(blank=True, null=True)
+    abc_primary_name = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_prem_addr_1 = models.TextField(blank=True, null=True)
+    abc_prem_addr_2 = models.TextField(blank=True, null=True)
+    abc_prem_city = models.TextField(blank=True, null=True)
+    abc_prem_state = models.TextField(blank=True, null=True)
+    abc_prem_zip = models.TextField(blank=True, null=True)
+    abc_dba_name = models.TextField( blank=True, null=True)
+    abc_mail_addr_1 = models.TextField(blank=True, null=True)
+    abc_mail_addr_2 = models.TextField( blank=True, null=True)
+    abc_mail_city = models.TextField(blank=True, null=True)  
+    abc_mail_state = models.TextField(blank=True, null=True)
+    abc_mail_zip = models.TextField(blank=True, null=True)
+    abc_prem_county = models.TextField( blank=True, null=True)
+    abc_prem_census_tract = models.TextField( blank=True, null=True)
     google_business_name = models.TextField( null=True, blank=True)
     google_business_address = models.TextField( null=True, blank=True)
     google_place_name = models.TextField( null=True, blank=True)
@@ -409,8 +400,7 @@ class DataErichmentWithConpanyInfo(models.Model):
     google_website = models.TextField(null=True, blank=True)
     google_types = models.TextField( null=True, blank=True)
     google_business_status = models.TextField( null=True, blank=True)
-    # Yelp Restaurant Record
-    yelp_file_number = models.TextField(blank=True, null=True) 
+# Yelp Restaurant Record
     yelp_license_type = models.TextField(blank=True, null=True)
     yelp_primary_name = models.TextField(blank=True, null=True)
     yelp_dba_name = models.TextField(blank=True, null=True)
@@ -427,7 +417,6 @@ class DataErichmentWithConpanyInfo(models.Model):
     # Additional Fields
     output_license_file_status = models.BooleanField(default=False)
     yelp_file_status = models.BooleanField(default=False)
- # Data Set 2
     agentsInformation_entity_name =  models.TextField(blank=True, null=True)
     agentsInformation_entity_num = models.TextField(blank=True, null=True)
     agentsInformation_org_name = models.TextField(blank=True, null=True)
@@ -442,7 +431,7 @@ class DataErichmentWithConpanyInfo(models.Model):
     agentsInformation_physical_country = models.TextField(blank=True, null=True)
     agentsInformation_physical_postal_code = models.TextField(max_length=20,blank=True, null=True)
     agentsInformation_agent_type = models.TextField(blank=True, null=True)
-    # Filings Information Records
+# Filings Information Records
     filingsInformation_entity_name = models.TextField(blank=True, null=True)
     filingsInformation_entity_num = models.TextField( blank=True, null=True)
     filingsInformation_initial_filing_date = models.TextField(blank=True, null=True)
@@ -479,7 +468,7 @@ class DataErichmentWithConpanyInfo(models.Model):
     filingsInformation_principal_postal_code_in_ca= models.TextField( blank=True, null=True)
     filingsInformation_llc_management_structure = models.TextField( blank=True, null=True)
     filingsInformation_type_of_business = models.TextField( blank=True, null=True)
-    # Principals Information Records
+# Principals Information Records
     principalsInformation_entity_name = models.TextField(blank=True, null=True)
     principalsInformation_entity_num = models.TextField(blank=True, null=True)
     principalsInformation_org_name = models.TextField(blank=True, null=True)

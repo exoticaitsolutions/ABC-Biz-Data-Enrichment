@@ -51,10 +51,8 @@ class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
     def process_csv_import(self, request, model_class, field_mappings):
         if request.method != "POST":
             return return_response(request, "admin/csv_form.html", context={"opts": self.model._meta, "form": CSVImportForm(), **self.admin_site.each_context(request)})
-
         # Handle file upload and remove BOM (Byte Order Mark)
         csv_file = remove_bom(request.FILES["csv_file"].file)
-        
         # CSV reading
         reader = csv.DictReader(csv_file)
         try:
@@ -76,20 +74,16 @@ class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
                 except Exception as e:
                     self.message_user(request, f"Error preparing or saving record: {str(e)}", messages.ERROR)
                     return None
-
                 # Check if we have enough records to insert in bulk
                 if len(records_to_create) >= 1000:  # Insert in batches of 1000 (you can adjust the batch size)
                     model_class.objects.bulk_create(records_to_create)
                     records_to_create.clear()  # Clear the list after bulk insert
-
             # Insert any remaining records (if less than 1000)
             if records_to_create:
                 model_class.objects.bulk_create(records_to_create)
-
             # Success message after processing all records
             self.message_user(request, "CSV imported successfully!", messages.SUCCESS)
             return HttpResponseRedirect(f"/admin/core_app/{model_class._meta.model_name}/")
-        
         except Exception as e:
             self.message_user(request, f"Error importing CSV: {str(e)}", messages.ERROR)
             return None

@@ -38,6 +38,8 @@ class LicenseOutput(models.Model):
     google_website = models.TextField(null=True, blank=True)
     google_types = models.TextField( null=True, blank=True)
     google_business_status = models.TextField( null=True, blank=True)
+    data_Found_inContact_Info = models.BooleanField(default=False)
+    data_Found_in_yelp = models.BooleanField(default=False)
     def __str__(self):
         return f"License Output Records : {self.abc_license_number} - {self.google_business_name}"
     
