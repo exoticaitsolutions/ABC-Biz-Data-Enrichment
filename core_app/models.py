@@ -38,6 +38,8 @@ class LicenseOutput(models.Model):
     google_website = models.TextField(null=True, blank=True)
     google_types = models.TextField( null=True, blank=True)
     google_business_status = models.TextField( null=True, blank=True)
+    data_Found_inContact_Info = models.BooleanField(default=False)
+    data_Found_in_yelp = models.BooleanField(default=False)
     def __str__(self):
         return f"License Output Records : {self.abc_license_number} - {self.google_business_name}"
     
@@ -61,7 +63,13 @@ class YelpRestaurantRecord(models.Model):
         return f"Yelp Restaurant Records : {self.yelp_file_number} - {self.yelp_dba_name}"
 # Model for Generating Data Set 1 End ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
+class CompanyInformationRecord(models.Model):
+    Company_Info_License_Number = models.TextField(blank=True, null=True)
+    Company_Info_Type = models.TextField(blank=True, null=True) 
+    Company_Info_Name = models.TextField(blank=True, null=True)
+    Company_Info_Role = models.TextField(blank=True, null=True)
+    def __str__(self):
+        return f"Company Information Record Restaurant Records : {self.Company_Info_License_Number} - {self.Company_Info_Name}"
 
 # Model for Generating Data Set 2 Start ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class PrincipalsInformation(models.Model):
@@ -113,8 +121,8 @@ class FilingsInformation(models.Model):
     filingsInformation_file_number = models.TextField(blank=True, null=True)  # Converted to TextField
     filingsInformation_lic_or_app = models.TextField(blank=True, null=True)  # Converted to TextField
     filingsInformation_type_status = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_type_orig_iss_date = models.DateField(blank=True, null=True)
-    filingsInformation_expir_date = models.DateField(blank=True, null=True)
+    filingsInformation_type_orig_iss_date = models.TextField(blank=True, null=True)
+    filingsInformation_expir_date = models.TextField(blank=True, null=True)
     filingsInformation_fee_codes = models.TextField(blank=True, null=True)  # Converted to TextField
     filingsInformation_dup_counts = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
     filingsInformation_master_ind = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
@@ -137,19 +145,19 @@ class FilingsInformation(models.Model):
     filingsInformation_prem_census_tract = models.TextField( blank=True, null=True)
     filingsInformation_entity_name = models.TextField(blank=True, null=True)
     filingsInformation_entity_num = models.TextField( blank=True, null=True)
-    filingsInformation_initial_filing_date = models.DateField(blank=True, null=True)
-    filingsInformation_jurisdiction = models.TextField(max_length=60,blank=True, null=True)
-    filingsInformation_entity_status = models.TextField( max_length=20,blank=True, null=True)
-    filingsInformation_standing_sos = models.TextField( max_length=20,blank=True, null=True)
+    filingsInformation_initial_filing_date = models.TextField(blank=True, null=True)
+    filingsInformation_jurisdiction = models.TextField(blank=True, null=True)
+    filingsInformation_entity_status = models.TextField(blank=True, null=True)
+    filingsInformation_standing_sos = models.TextField(blank=True, null=True)
     filingsInformation_entity_type = models.TextField(blank=True, null=True)
     filingsInformation_filing_type = models.TextField(max_length=60,blank=True, null=True)
     filingsInformation_foreign_name = models.TextField( blank=True, null=True)
     filingsInformation_standing_ftb = models.TextField( blank=True, null=True)
     filingsInformation_standing_vcfcf = models.TextField(blank=True, null=True)
     filingsInformation_standing_agent = models.TextField(blank=True, null=True)
-    filingsInformation_suspension_date = models.DateField(blank=True, null=True)
+    filingsInformation_suspension_date = models.TextField(blank=True, null=True)
     filingsInformation_last_si_file_number = models.TextField(max_length=70, blank=True, null=True)
-    filingsInformation_last_si_file_date = models.DateField(blank=True, null=True)
+    filingsInformation_last_si_file_date = models.TextField(blank=True, null=True)
     filingsInformation_principal_address = models.TextField( blank=True, null=True)
     filingsInformation_principal_address2 = models.TextField( blank=True, null=True)
     filingsInformation_principal_city = models.TextField( blank=True, null=True)

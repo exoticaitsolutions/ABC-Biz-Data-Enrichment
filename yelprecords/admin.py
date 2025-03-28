@@ -1,13 +1,15 @@
 from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
+from tqdm import tqdm
 from ABC_BizEnrichment.common.helper_function import get_full_function_name
 from ABC_BizEnrichment.common.merge_data.helper_function import CustomMergeAdminMixin
-from merge_data.models import DataErichment
+from core_app.models import CompanyInformationRecord
+from merge_data.models import  DataErichmentFinalRecords, DataErichmentWithoutConpanyInfo
 from yelprecords.models import AssociatedContactMapping, LicenseeProfile, UniqueLocationLicense
 from ABC_BizEnrichment.common.logconfig import logger
 from import_export.admin import ExportMixin
 @admin.register(LicenseeProfile)
-class LicenseeProfileAdmin(ExportMixin, admin.ModelAdmin):
+class LicenseeProfileAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
     merge_url_name = "licenseeprofilerecords"
     list_display = ("id",)
     def create_or_update_licensee_profile(self, abc_license_number, mapping):
@@ -18,16 +20,23 @@ class LicenseeProfileAdmin(ExportMixin, admin.ModelAdmin):
         def DataSet3Recordmerge_view(request):
             full_function_name = get_full_function_name()
             batch_size = 50
-            dataerichment = DataErichment.objects.all()
+            dataerichment = DataErichmentFinalRecords.objects.all()
             total_dataerichment_count = dataerichment.count()
             records_to_create = []
-            for i in range(0, total_dataerichment_count, batch_size):
+            for i in tqdm(range(0, total_dataerichment_count, batch_size), desc="Processing Data", unit="batch"):
                 betchdataerichment = dataerichment[i:i + batch_size]
                 for batch in betchdataerichment:
-                    abc_license_number = batch.abc_license_number
+                    abc_license_number = str(batch.abc_license_number) 
+                    matching_second_records = CompanyInformationRecord.objects.filter(Company_Info_License_Number=abc_license_number)
+                    print('matching_second_records', matching_second_records.count())
+                    if matching_second_records:
+                        Company_Info_License_Number = matching_second_records[0].Company_Info_License_Number
+                    else:
+                        Company_Info_License_Number = ''
+                    print(f'Company_Info_License_Number ---->>>>>>>>> {Company_Info_License_Number}')
                     LicenseeProfilemapping = {
                     'abc_licensee': batch.abc_licensee,
-                    'Company_Info_License_Number': batch.Company_Info_License_Number,
+                    'Company_Info_License_Number': Company_Info_License_Number,
                     'filingsInformation_entity_num': batch.filingsInformation_entity_num,
                     'abc_primary_name': batch.abc_primary_name,
                     'abc_dba_name':batch.abc_dba_name,
@@ -82,8 +91,8 @@ class LicenseeProfileAdmin(ExportMixin, admin.ModelAdmin):
                     }
                     obj, created = UniqueLocationLicense.objects.update_or_create( abc_license_number=abc_license_number,  defaults=LicenseeProfilemapping)
                     new_LicenseeProfile = LicenseeProfile()
-                    new_LicenseeProfile.abc_license_number = obj
-                    new_LicenseeProfile.Company_Info_License_Number = obj.id
+                    new_LicenseeProfile.abc_license_number = abc_license_number
+                    new_LicenseeProfile.Company_Info_License_Number = Company_Info_License_Number
                     new_LicenseeProfile.abc_business_address = batch.abc_business_address
                     new_LicenseeProfile.abc_county = batch.abc_county
                     new_LicenseeProfile.abc_census_tract = batch.abc_census_tract
@@ -128,7 +137,6 @@ class LicenseeProfileAdmin(ExportMixin, admin.ModelAdmin):
                     new_LicenseeProfile.abc_prem_zip = batch.abc_prem_zip
                     new_LicenseeProfile.abc_dba_name = batch.abc_dba_name
                     new_LicenseeProfile.abc_prem_county = batch.abc_prem_county
-                    # new_LicenseeProfile.abc_prem_census_tract = batch.abc_prem_census_tract
                     new_LicenseeProfile.google_business_name = batch.google_business_name
                     new_LicenseeProfile.google_business_address = batch.google_business_address
                     new_LicenseeProfile.google_place_name = batch.google_place_name
@@ -155,51 +163,55 @@ class LicenseeProfileAdmin(ExportMixin, admin.ModelAdmin):
                     new_LicenseeProfile.yelp_file_status = bool(batch.yelp_file_status)
                     new_LicenseeProfile.filingsInformation_entity_num = batch.filingsInformation_entity_num
                     new_LicenseeProfile.save()
-                    new_AssociatedContactMapping= AssociatedContactMapping()
-                    new_AssociatedContactMapping.abc_license_number = obj
-                    new_AssociatedContactMapping.Company_Info_License_Number = obj.id
-                    new_AssociatedContactMapping.Company_Info_Type = batch.Company_Info_Type
-                    new_AssociatedContactMapping.Company_Info_Name = batch.Company_Info_Name
-                    new_AssociatedContactMapping.Company_Info_Role = batch.Company_Info_Role
-                    new_AssociatedContactMapping.agentsInformation_entity_num = batch.agentsInformation_entity_num
-                    new_AssociatedContactMapping.agentsInformation_org_name = batch.agentsInformation_org_name
-                    new_AssociatedContactMapping.agentsInformation_first_name = batch.agentsInformation_first_name
-                    new_AssociatedContactMapping.agentsInformation_middle_name = batch.agentsInformation_middle_name
-                    new_AssociatedContactMapping.agentsInformation_last_name = batch.agentsInformation_last_name
-                    new_AssociatedContactMapping.agentsInformation_physical_address1 = batch.agentsInformation_physical_address1
-                    new_AssociatedContactMapping.agentsInformation_physical_address2 = batch.agentsInformation_physical_address2
-                    new_AssociatedContactMapping.agentsInformation_physical_address3 = batch.agentsInformation_physical_address3
-                    new_AssociatedContactMapping.agentsInformation_physical_city = batch.agentsInformation_physical_city
-                    new_AssociatedContactMapping.agentsInformation_physical_state = batch.agentsInformation_physical_state
-                    new_AssociatedContactMapping.agentsInformation_physical_country = batch.agentsInformation_physical_country
-                    new_AssociatedContactMapping.agentsInformation_physical_postal_code = batch.agentsInformation_physical_postal_code
-                    new_AssociatedContactMapping.agentsInformation_agent_type = batch.agentsInformation_agent_type
-                    new_AssociatedContactMapping.filingsInformation_entity_num = batch.filingsInformation_entity_num
-                    new_AssociatedContactMapping.principalsInformation_entity_num = batch.principalsInformation_entity_num
-                    new_AssociatedContactMapping.principalsInformation_org_name = batch.principalsInformation_org_name
-                    new_AssociatedContactMapping.principalsInformation_first_name = batch.principalsInformation_first_name
-                    new_AssociatedContactMapping.principalsInformation_middle_name = batch.principalsInformation_middle_name
-                    new_AssociatedContactMapping.principalsInformation_last_name = batch.principalsInformation_last_name
-                    new_AssociatedContactMapping.principalsInformation_address1 = batch.principalsInformation_address1
-                    new_AssociatedContactMapping.principalsInformation_address2 = batch.principalsInformation_address2
-                    new_AssociatedContactMapping.principalsInformation_address3 = batch.principalsInformation_address3
-                    new_AssociatedContactMapping.principalsInformation_city = batch.principalsInformation_city
-                    new_AssociatedContactMapping.principalsInformation_state = batch.principalsInformation_state
-                    new_AssociatedContactMapping.principalsInformation_country = batch.principalsInformation_country
-                    new_AssociatedContactMapping.principalsInformation_postal_code = batch.principalsInformation_postal_code
-                    new_AssociatedContactMapping.principalsInformation_position_1 = batch.principalsInformation_position_1
-                    new_AssociatedContactMapping.principalsInformation_position_2 = batch.principalsInformation_position_2
-                    new_AssociatedContactMapping.principalsInformation_position_3 = batch.principalsInformation_position_3
-                    new_AssociatedContactMapping.principalsInformation_position_4 = batch.principalsInformation_position_4
-                    new_AssociatedContactMapping.principalsInformation_position_5 = batch.principalsInformation_position_5
-                    new_AssociatedContactMapping.principalsInformation_position_6 = batch.principalsInformation_position_6
-                    new_AssociatedContactMapping.principalsInformation_position_7 = batch.principalsInformation_position_7
-                    new_AssociatedContactMapping.filling_information_file_status = bool(batch.filling_information_file_status)
-                    new_AssociatedContactMapping.principal_information_file_status = bool(batch.principal_information_file_status)
-                    new_AssociatedContactMapping.agentsInformation_file_status = bool(batch.agentsInformation_file_status)
-                    new_AssociatedContactMapping.data_set_1_file_status = bool(batch.data_set_1_file_status)
-                    new_AssociatedContactMapping.data_set_2_file_status = bool(batch.data_set_2_file_status)
-                    new_AssociatedContactMapping.save()
+                    if matching_second_records:
+                        for rec in matching_second_records:
+                            new_AssociatedContactMapping= AssociatedContactMapping()
+                            new_AssociatedContactMapping.abc_license_number = abc_license_number
+                            new_AssociatedContactMapping.Company_Info_License_Number = rec.Company_Info_Type
+                            new_AssociatedContactMapping.Company_Info_Type = rec.Company_Info_Type
+                            new_AssociatedContactMapping.Company_Info_Name = rec.Company_Info_Name
+                            new_AssociatedContactMapping.Company_Info_Role = rec.Company_Info_Role
+                            new_AssociatedContactMapping.agentsInformation_entity_num = batch.agentsInformation_entity_num
+                            new_AssociatedContactMapping.agentsInformation_org_name = batch.agentsInformation_org_name
+                            new_AssociatedContactMapping.agentsInformation_first_name = batch.agentsInformation_first_name
+                            new_AssociatedContactMapping.agentsInformation_middle_name = batch.agentsInformation_middle_name
+                            new_AssociatedContactMapping.agentsInformation_last_name = batch.agentsInformation_last_name
+                            new_AssociatedContactMapping.agentsInformation_physical_address1 = batch.agentsInformation_physical_address1
+                            new_AssociatedContactMapping.agentsInformation_physical_address2 = batch.agentsInformation_physical_address2
+                            new_AssociatedContactMapping.agentsInformation_physical_address3 = batch.agentsInformation_physical_address3
+                            new_AssociatedContactMapping.agentsInformation_physical_city = batch.agentsInformation_physical_city
+                            new_AssociatedContactMapping.agentsInformation_physical_state = batch.agentsInformation_physical_state
+                            new_AssociatedContactMapping.agentsInformation_physical_country = batch.agentsInformation_physical_country
+                            new_AssociatedContactMapping.agentsInformation_physical_postal_code = batch.agentsInformation_physical_postal_code
+                            new_AssociatedContactMapping.agentsInformation_agent_type = batch.agentsInformation_agent_type
+                            new_AssociatedContactMapping.filingsInformation_entity_num = batch.filingsInformation_entity_num
+                            new_AssociatedContactMapping.principalsInformation_entity_num = batch.principalsInformation_entity_num
+                            new_AssociatedContactMapping.principalsInformation_org_name = batch.principalsInformation_org_name
+                            new_AssociatedContactMapping.principalsInformation_first_name = batch.principalsInformation_first_name
+                            new_AssociatedContactMapping.principalsInformation_middle_name = batch.principalsInformation_middle_name
+                            new_AssociatedContactMapping.principalsInformation_last_name = batch.principalsInformation_last_name
+                            new_AssociatedContactMapping.principalsInformation_address1 = batch.principalsInformation_address1
+                            new_AssociatedContactMapping.principalsInformation_address2 = batch.principalsInformation_address2
+                            new_AssociatedContactMapping.principalsInformation_address3 = batch.principalsInformation_address3
+                            new_AssociatedContactMapping.principalsInformation_city = batch.principalsInformation_city
+                            new_AssociatedContactMapping.principalsInformation_state = batch.principalsInformation_state
+                            new_AssociatedContactMapping.principalsInformation_country = batch.principalsInformation_country
+                            new_AssociatedContactMapping.principalsInformation_postal_code = batch.principalsInformation_postal_code
+                            new_AssociatedContactMapping.principalsInformation_position_1 = batch.principalsInformation_position_1
+                            new_AssociatedContactMapping.principalsInformation_position_2 = batch.principalsInformation_position_2
+                            new_AssociatedContactMapping.principalsInformation_position_3 = batch.principalsInformation_position_3
+                            new_AssociatedContactMapping.principalsInformation_position_4 = batch.principalsInformation_position_4
+                            new_AssociatedContactMapping.principalsInformation_position_5 = batch.principalsInformation_position_5
+                            new_AssociatedContactMapping.principalsInformation_position_6 = batch.principalsInformation_position_6
+                            new_AssociatedContactMapping.principalsInformation_position_7 = batch.principalsInformation_position_7
+                            new_AssociatedContactMapping.filling_information_file_status = bool(batch.filling_information_file_status)
+                            new_AssociatedContactMapping.principal_information_file_status = bool(batch.principal_information_file_status)
+                            new_AssociatedContactMapping.agentsInformation_file_status = bool(batch.agentsInformation_file_status)
+                            new_AssociatedContactMapping.data_set_1_file_status = bool(batch.data_set_1_file_status)
+                            new_AssociatedContactMapping.data_set_2_file_status = bool(batch.data_set_2_file_status)
+                            new_AssociatedContactMapping.save()
+                    # break
+                # break
             message = 'Data Sync Process Successfully'
             logger.info(f"{full_function_name}: {message}")
             self.message_user(request, message, messages.SUCCESS)
