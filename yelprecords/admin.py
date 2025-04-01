@@ -28,12 +28,12 @@ class LicenseeProfileAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
                 for batch in betchdataerichment:
                     abc_license_number = str(batch.abc_license_number) 
                     matching_second_records = CompanyInformationRecord.objects.filter(Company_Info_License_Number=abc_license_number)
-                    print('matching_second_records', matching_second_records.count())
+                    # print('matching_second_records', matching_second_records.count())
                     if matching_second_records:
                         Company_Info_License_Number = matching_second_records[0].Company_Info_License_Number
                     else:
                         Company_Info_License_Number = ''
-                    print(f'Company_Info_License_Number ---->>>>>>>>> {Company_Info_License_Number}')
+                    # print(f'Company_Info_License_Number ---->>>>>>>>> {Company_Info_License_Number}')
                     LicenseeProfilemapping = {
                     'abc_licensee': batch.abc_licensee,
                     'Company_Info_License_Number': Company_Info_License_Number,
