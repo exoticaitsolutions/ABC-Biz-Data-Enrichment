@@ -1,16 +1,16 @@
-import csv
 from django.contrib import admin
-from django.http import HttpResponseRedirect
-from ABC_BizEnrichment.common.core_app.helper_function import BaseCSVImportAdmin, CSVImportAdminMixin, CSVImportForm
-from ABC_BizEnrichment.common.helper_function import get_column_names, get_full_function_name, parse_date, remove_bom, return_response, validate_yelp_rating
-from ABC_BizEnrichment.common.logconfig import logger
+from ABC_BizEnrichment.common.core_app.helper_function import BaseCSVImportAdmin
+from ABC_BizEnrichment.common.helper_function import get_column_names, parse_date, validate_yelp_rating
 from core_app.models import AgentsInformation, CompanyInformationRecord, FilingsInformation, LicenseOutput, PrincipalsInformation, YelpRestaurantRecord
-from django.contrib import admin, messages
+from django.contrib import admin
+from django.db.models import Min
 # Genrating Data Set 1  Start ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # # Licens eOutput Records 
 @admin.register(LicenseOutput)
 class LicenseOutputAdmin(BaseCSVImportAdmin):
     list_display = ("id", "abc_license_number", "abc_licensee", "abc_primary_owner", "abc_business_name","google_business_name", "google_business_status")
+    # Step 1: Get IDs to keep
+
     csv_import_url_name = "license_output"
     fieldsets = (
         ('ABC License Records', {
@@ -195,8 +195,8 @@ class AgentsInformationAdmin(BaseCSVImportAdmin):
 @admin.register(FilingsInformation)
 class FilingsInformationAdmin(BaseCSVImportAdmin):
     csv_import_url_name = "filingsinformation"
-    search_fields = ("filingsInformation_entity_num","filingsInformation_entity_name")
-    list_display = ("id","filingsInformation_entity_num","filingsInformation_file_number", "filingsInformation_license_type", "filingsInformation_type_status", "filingsInformation_primary_name", "filingsInformation_jurisdiction")
+    # search_fields = ("abc_entity_num","abc__entity_name")
+    list_display = ("id","abc_file_number","filingsInformation_entity_name")
     csv_import_url_name = "filingsinformation" 
     PrincipalsInformationCoulmne = get_column_names(FilingsInformation,['id'], include_relations=True) # type: ignore
     fieldsets = (
@@ -207,25 +207,25 @@ class FilingsInformationAdmin(BaseCSVImportAdmin):
     def get_import_view(self):
         def importfilingsinformation(request):
             mappings = {
-                'filingsInformation_license_type': lambda row: row['License_Type'],
-                'filingsInformation_file_number': lambda row: row['File_Number'],
-                'filingsInformation_lic_or_app': lambda row: row['Lic_or_App'],
-                'filingsInformation_type_status': lambda row: row['Type_Status'],
-                'filingsInformation_type_orig_iss_date': lambda row: parse_date(row['Type_Orig_Iss_Date']),
-                'filingsInformation_expir_date': lambda row: parse_date(row['Expir_Date']),
-                'filingsInformation_fee_codes': lambda row: row['Fee_Codes'],
-                'filingsInformation_dup_counts': lambda row: row['Dup_Counts'],
-                'filingsInformation_master_ind': lambda row: row['Master_Ind'],
-                'filingsInformation_term_in_number_of_months': lambda row: row['Term_in_#_of_Months'],
-                'filingsInformation_geo_code': lambda row: row['Geo_Code'],
-                'filingsInformation_district': lambda row: row['District'],
-                'filingsInformation_primary_name': lambda row: row['Primary_Name'],
-                'filingsInformation_prem_addr_1': lambda row: row['Prem_Addr_1'],
-                'filingsInformation_prem_addr_2': lambda row: row['Prem_Addr_2'],
-                'filingsInformation_prem_city': lambda row: row['Prem_City'],
-                'filingsInformation_prem_state': lambda row: row['Prem_State'],
-                'filingsInformation_prem_zip': lambda row: row['Prem_Zip'],
-                'filingsInformation_dba_name': lambda row: row['DBA_Name'],
+                'abc_license_type': lambda row: row['License_Type'],
+                'abc_file_number': lambda row: row['File_Number'],
+                'abc_lic_or_app': lambda row: row['Lic_or_App'],
+                'abc_type_status': lambda row: row['Type_Status'],
+                'abc_type_orig_iss_date': lambda row: parse_date(row['Type_Orig_Iss_Date']),
+                'abc_expir_date': lambda row: parse_date(row['Expir_Date']),
+                'abc_fee_codes': lambda row: row['Fee_Codes'],
+                'abc_dup_counts': lambda row: row['Dup_Counts'],
+                'abc_master_ind': lambda row: row['Master_Ind'],
+                'abc_term_in_number_of_months': lambda row: row['Term_in_#_of_Months'],
+                'abc_geo_code': lambda row: row['Geo_Code'],
+                'abc_district': lambda row: row['District'],
+                'abc_primary_name': lambda row: row['Primary_Name'],
+                'abc_prem_addr_1': lambda row: row['Prem_Addr_1'],
+                'abc_prem_addr_2': lambda row: row['Prem_Addr_2'],
+                'abc_prem_city': lambda row: row['Prem_City'],
+                'abc_prem_state': lambda row: row['Prem_State'],
+                'abc_prem_zip': lambda row: row['Prem_Zip'],
+                'abc__dba_name': lambda row: row['DBA_Name'],
                 'filingsInformation_mail_addr_1': lambda row: row['Mail_Addr_1'],
                 'filingsInformation_mail_addr_2': lambda row: row['Mail_Addr_2'],
                 'filingsInformation_mail_city': lambda row: row['Mail_City'],
