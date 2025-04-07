@@ -2,7 +2,7 @@ from django.db import models
 class DataSet1Record(models.Model):
     abc_license_number = models.TextField(blank=True, null=True)  # Converted to TextField
     yelp_file_number = models.TextField(blank=True, null=True) 
-# License Output
+    # License Output
     abc_primary_owner = models.TextField( null=True, blank=True)
     abc_office_of_application = models.TextField( null=True, blank=True)
     abc_business_name = models.TextField( null=True, blank=True)
@@ -62,7 +62,6 @@ class DataSet1Record(models.Model):
 
 
 class DataSet2Record(models.Model):
-    
     # Common Fields on the based of 
 # agents Information Records 
     agentsInformation_entity_name =  models.TextField(blank=True, null=True)
@@ -79,48 +78,48 @@ class DataSet2Record(models.Model):
     agentsInformation_physical_country = models.TextField(blank=True, null=True)
     agentsInformation_physical_postal_code = models.TextField(max_length=20,blank=True, null=True)
     agentsInformation_agent_type = models.TextField(blank=True, null=True)
-# Filings Information Records
-    filingsInformation_license_type = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_file_number = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_lic_or_app = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_type_status = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_type_orig_iss_date = models.DateField(blank=True, null=True)
-    filingsInformation_expir_date = models.DateField(blank=True, null=True)
-    filingsInformation_fee_codes = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_dup_counts = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
-    filingsInformation_master_ind = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
-    filingsInformation_term_in_number_of_months = models.IntegerField(blank=True, null=True)
-    filingsInformation_geo_code = models.TextField( blank=True, null=True)
-    filingsInformation_district = models.TextField(blank=True, null=True)
-    filingsInformation_primary_name = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_prem_addr_1 = models.TextField(blank=True, null=True)
-    filingsInformation_prem_addr_2 = models.TextField(blank=True, null=True)
-    filingsInformation_prem_city = models.TextField(blank=True, null=True)
-    filingsInformation_prem_state = models.TextField(blank=True, null=True)
-    filingsInformation_prem_zip = models.TextField(blank=True, null=True)
-    filingsInformation_dba_name = models.TextField( blank=True, null=True)
-    filingsInformation_mail_addr_1 = models.TextField(blank=True, null=True)
-    filingsInformation_mail_addr_2 = models.TextField( blank=True, null=True)
-    filingsInformation_mail_city = models.TextField(blank=True, null=True)  
-    filingsInformation_mail_state = models.TextField(blank=True, null=True)
-    filingsInformation_mail_zip = models.TextField(blank=True, null=True)
-    filingsInformation_prem_county = models.TextField( blank=True, null=True)
-    filingsInformation_prem_census_tract = models.TextField( blank=True, null=True)
+    # Filings Information Records
+    abc_license_type = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_file_number = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_lic_or_app = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_type_status = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_type_orig_iss_date = models.TextField(blank=True, null=True)
+    abc_expir_date = models.TextField(blank=True, null=True)
+    abc_fee_codes = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_dup_counts = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    abc_master_ind = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    abc_term_in_number_of_months = models.IntegerField(blank=True, null=True)
+    abc_geo_code = models.TextField( blank=True, null=True)
+    abc_district = models.TextField(blank=True, null=True)
+    abc_primary_name = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_prem_addr_1 = models.TextField(blank=True, null=True)
+    abc_prem_addr_2 = models.TextField(blank=True, null=True)
+    abc_prem_city = models.TextField(blank=True, null=True)
+    abc_prem_state = models.TextField(blank=True, null=True)
+    abc_prem_zip = models.TextField(blank=True, null=True)
+    abc_dba_name = models.TextField( blank=True, null=True)
+    abc_mail_addr_1 = models.TextField(blank=True, null=True)
+    abc_mail_addr_2 = models.TextField( blank=True, null=True)
+    abc_mail_city = models.TextField(blank=True, null=True)  
+    abc_mail_state = models.TextField(blank=True, null=True)
+    abc_mail_zip = models.TextField(blank=True, null=True)
+    abc_prem_county = models.TextField( blank=True, null=True)
+    abc_prem_census_tract = models.TextField( blank=True, null=True)
     filingsInformation_entity_name = models.TextField(blank=True, null=True)
     filingsInformation_entity_num = models.TextField( blank=True, null=True)
-    filingsInformation_initial_filing_date = models.DateField(blank=True, null=True)
-    filingsInformation_jurisdiction = models.TextField(max_length=60,blank=True, null=True)
-    filingsInformation_entity_status = models.TextField( max_length=20,blank=True, null=True)
-    filingsInformation_standing_sos = models.TextField( max_length=20,blank=True, null=True)
+    filingsInformation_initial_filing_date = models.TextField(blank=True, null=True)
+    filingsInformation_jurisdiction = models.TextField(blank=True, null=True)
+    filingsInformation_entity_status = models.TextField(blank=True, null=True)
+    filingsInformation_standing_sos = models.TextField(blank=True, null=True)
     filingsInformation_entity_type = models.TextField(blank=True, null=True)
     filingsInformation_filing_type = models.TextField(max_length=60,blank=True, null=True)
     filingsInformation_foreign_name = models.TextField( blank=True, null=True)
     filingsInformation_standing_ftb = models.TextField( blank=True, null=True)
     filingsInformation_standing_vcfcf = models.TextField(blank=True, null=True)
     filingsInformation_standing_agent = models.TextField(blank=True, null=True)
-    filingsInformation_suspension_date = models.DateField(blank=True, null=True)
+    filingsInformation_suspension_date = models.TextField(blank=True, null=True)
     filingsInformation_last_si_file_number = models.TextField(max_length=70, blank=True, null=True)
-    filingsInformation_last_si_file_date = models.DateField(blank=True, null=True)
+    filingsInformation_last_si_file_date = models.TextField(blank=True, null=True)
     filingsInformation_principal_address = models.TextField( blank=True, null=True)
     filingsInformation_principal_address2 = models.TextField( blank=True, null=True)
     filingsInformation_principal_city = models.TextField( blank=True, null=True)
@@ -246,47 +245,47 @@ class DataErichmentWithoutConpanyInfo(models.Model):
     agentsInformation_physical_postal_code = models.TextField(max_length=20,blank=True, null=True)
     agentsInformation_agent_type = models.TextField(blank=True, null=True)
 # Filings Information Records
-    filingsInformation_license_type = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_file_number = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_lic_or_app = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_type_status = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_type_orig_iss_date = models.DateField(blank=True, null=True)
-    filingsInformation_expir_date = models.DateField(blank=True, null=True)
-    filingsInformation_fee_codes = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_dup_counts = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
-    filingsInformation_master_ind = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
-    filingsInformation_term_in_number_of_months = models.IntegerField(blank=True, null=True)
-    filingsInformation_geo_code = models.TextField( blank=True, null=True)
-    filingsInformation_district = models.TextField(blank=True, null=True)
-    filingsInformation_primary_name = models.TextField(blank=True, null=True)  # Converted to TextField
-    filingsInformation_prem_addr_1 = models.TextField(blank=True, null=True)
-    filingsInformation_prem_addr_2 = models.TextField(blank=True, null=True)
-    filingsInformation_prem_city = models.TextField(blank=True, null=True)
-    filingsInformation_prem_state = models.TextField(blank=True, null=True)
-    filingsInformation_prem_zip = models.TextField(blank=True, null=True)
-    filingsInformation_dba_name = models.TextField( blank=True, null=True)
-    filingsInformation_mail_addr_1 = models.TextField(blank=True, null=True)
-    filingsInformation_mail_addr_2 = models.TextField( blank=True, null=True)
-    filingsInformation_mail_city = models.TextField(blank=True, null=True)  
-    filingsInformation_mail_state = models.TextField(blank=True, null=True)
-    filingsInformation_mail_zip = models.TextField(blank=True, null=True)
-    filingsInformation_prem_county = models.TextField( blank=True, null=True)
-    filingsInformation_prem_census_tract = models.TextField( blank=True, null=True)
+    abc_license_type = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_file_number = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_lic_or_app = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_type_status = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_type_orig_iss_date = models.TextField(blank=True, null=True)
+    abc_expir_date = models.TextField(blank=True, null=True)
+    abc_fee_codes = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_dup_counts = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    abc_master_ind = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    abc_term_in_number_of_months = models.IntegerField(blank=True, null=True)
+    abc_geo_code = models.TextField( blank=True, null=True)
+    abc_district = models.TextField(blank=True, null=True)
+    abc_primary_name = models.TextField(blank=True, null=True)  # Converted to TextField
+    abc_prem_addr_1 = models.TextField(blank=True, null=True)
+    abc_prem_addr_2 = models.TextField(blank=True, null=True)
+    abc_prem_city = models.TextField(blank=True, null=True)
+    abc_prem_state = models.TextField(blank=True, null=True)
+    abc_prem_zip = models.TextField(blank=True, null=True)
+    abc_dba_name = models.TextField( blank=True, null=True)
+    abc_mail_addr_1 = models.TextField(blank=True, null=True)
+    abc_mail_addr_2 = models.TextField( blank=True, null=True)
+    abc_mail_city = models.TextField(blank=True, null=True)  
+    abc_mail_state = models.TextField(blank=True, null=True)
+    abc_mail_zip = models.TextField(blank=True, null=True)
+    abc_prem_county = models.TextField( blank=True, null=True)
+    abc_prem_census_tract = models.TextField( blank=True, null=True)
     filingsInformation_entity_name = models.TextField(blank=True, null=True)
     filingsInformation_entity_num = models.TextField( blank=True, null=True)
-    filingsInformation_initial_filing_date = models.DateField(blank=True, null=True)
-    filingsInformation_jurisdiction = models.TextField(max_length=60,blank=True, null=True)
-    filingsInformation_entity_status = models.TextField( max_length=20,blank=True, null=True)
-    filingsInformation_standing_sos = models.TextField( max_length=20,blank=True, null=True)
+    filingsInformation_initial_filing_date = models.TextField(blank=True, null=True)
+    filingsInformation_jurisdiction = models.TextField(blank=True, null=True)
+    filingsInformation_entity_status = models.TextField(blank=True, null=True)
+    filingsInformation_standing_sos = models.TextField(blank=True, null=True)
     filingsInformation_entity_type = models.TextField(blank=True, null=True)
     filingsInformation_filing_type = models.TextField(max_length=60,blank=True, null=True)
     filingsInformation_foreign_name = models.TextField( blank=True, null=True)
     filingsInformation_standing_ftb = models.TextField( blank=True, null=True)
     filingsInformation_standing_vcfcf = models.TextField(blank=True, null=True)
     filingsInformation_standing_agent = models.TextField(blank=True, null=True)
-    filingsInformation_suspension_date = models.DateField(blank=True, null=True)
+    filingsInformation_suspension_date = models.TextField(blank=True, null=True)
     filingsInformation_last_si_file_number = models.TextField(max_length=70, blank=True, null=True)
-    filingsInformation_last_si_file_date = models.DateField(blank=True, null=True)
+    filingsInformation_last_si_file_date = models.TextField(blank=True, null=True)
     filingsInformation_principal_address = models.TextField( blank=True, null=True)
     filingsInformation_principal_address2 = models.TextField( blank=True, null=True)
     filingsInformation_principal_city = models.TextField( blank=True, null=True)
