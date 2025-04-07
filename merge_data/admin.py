@@ -1,20 +1,16 @@
 
-import csv
-from datetime import datetime
 import time
 from django.contrib import admin,messages
 from django.db.models import CharField
 from tqdm import tqdm
-from ABC_BizEnrichment.common.helper_function import generate_model_fields, get_column_names, get_full_function_name, parse_date
+from ABC_BizEnrichment.common.helper_function import get_column_names, get_full_function_name
 from ABC_BizEnrichment.common.merge_data.helper_function import CustomMergeAdminMixin
 from django.http import HttpResponseRedirect 
 from ABC_BizEnrichment.common.logconfig import logger
 from django.db.models import F, Value
 from django.db.models.functions import Replace, Lower
-from core_app.models import AgentsInformation, CompanyInformationRecord, FilingsInformation, LicenseOutput, PrincipalsInformation, YelpRestaurantRecord
-from merge_data.models import  DataErichmentFinalRecords, DataErichmentWithoutConpanyInfo, DataSet1Record, DataSet2Record
-from import_export.admin import ExportMixin
-import pandas as pd
+from core_app.models import AgentsInformation, FilingsInformation, LicenseOutput, PrincipalsInformation, YelpRestaurantRecord
+from merge_data.models import  DataErichmentWithoutConpanyInfo, DataSet1Record, DataSet2Record
 
 @admin.register(DataSet1Record)
 class DataSet1RecordAdmin(CustomMergeAdminMixin, admin.ModelAdmin):  # ExportMixin
