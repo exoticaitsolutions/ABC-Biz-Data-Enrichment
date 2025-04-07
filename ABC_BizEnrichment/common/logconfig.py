@@ -10,8 +10,6 @@ log_level = getattr(settings, 'LOG_LEVEL', 'INFO').upper()  # Correcting typo an
 # Check if log folder is provided and create it if necessary
 if log_folder:
     os.makedirs(log_folder, exist_ok=True)
-else:
-    log_folder = './logs'  # Default log folder if none is set
 
 # Set up the logger
 logger = logging.getLogger(__name__)

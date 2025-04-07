@@ -79,32 +79,32 @@ class DataSet2Record(models.Model):
     agentsInformation_physical_postal_code = models.TextField(max_length=20,blank=True, null=True)
     agentsInformation_agent_type = models.TextField(blank=True, null=True)
     # Filings Information Records
-    abc_license_type = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_file_number = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_lic_or_app = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_type_status = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_type_orig_iss_date = models.TextField(blank=True, null=True)
-    abc_expir_date = models.TextField(blank=True, null=True)
-    abc_fee_codes = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_dup_counts = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
-    abc_master_ind = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
-    abc_term_in_number_of_months = models.IntegerField(blank=True, null=True)
-    abc_geo_code = models.TextField( blank=True, null=True)
-    abc_district = models.TextField(blank=True, null=True)
-    abc_primary_name = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_prem_addr_1 = models.TextField(blank=True, null=True)
-    abc_prem_addr_2 = models.TextField(blank=True, null=True)
-    abc_prem_city = models.TextField(blank=True, null=True)
-    abc_prem_state = models.TextField(blank=True, null=True)
-    abc_prem_zip = models.TextField(blank=True, null=True)
-    abc_dba_name = models.TextField( blank=True, null=True)
-    abc_mail_addr_1 = models.TextField(blank=True, null=True)
-    abc_mail_addr_2 = models.TextField( blank=True, null=True)
-    abc_mail_city = models.TextField(blank=True, null=True)  
-    abc_mail_state = models.TextField(blank=True, null=True)
-    abc_mail_zip = models.TextField(blank=True, null=True)
-    abc_prem_county = models.TextField( blank=True, null=True)
-    abc_prem_census_tract = models.TextField( blank=True, null=True)
+    # abc_license_type = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_file_number = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_lic_or_app = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_type_status = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_type_orig_iss_date = models.TextField(blank=True, null=True)
+    # abc_expir_date = models.TextField(blank=True, null=True)
+    # abc_fee_codes = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_dup_counts = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    # abc_master_ind = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    # abc_term_in_number_of_months = models.IntegerField(blank=True, null=True)
+    # abc_geo_code = models.TextField( blank=True, null=True)
+    # abc_district = models.TextField(blank=True, null=True)
+    # abc_primary_name = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_prem_addr_1 = models.TextField(blank=True, null=True)
+    # abc_prem_addr_2 = models.TextField(blank=True, null=True)
+    # abc_prem_city = models.TextField(blank=True, null=True)
+    # abc_prem_state = models.TextField(blank=True, null=True)
+    # abc_prem_zip = models.TextField(blank=True, null=True)
+    # abc_dba_name = models.TextField( blank=True, null=True)
+    # abc_mail_addr_1 = models.TextField(blank=True, null=True)
+    # abc_mail_addr_2 = models.TextField( blank=True, null=True)
+    # abc_mail_city = models.TextField(blank=True, null=True)  
+    # abc_mail_state = models.TextField(blank=True, null=True)
+    # abc_mail_zip = models.TextField(blank=True, null=True)
+    # abc_prem_county = models.TextField( blank=True, null=True)
+    # abc_prem_census_tract = models.TextField( blank=True, null=True)
     filingsInformation_entity_name = models.TextField(blank=True, null=True)
     filingsInformation_entity_num = models.TextField( blank=True, null=True)
     filingsInformation_initial_filing_date = models.TextField(blank=True, null=True)
@@ -245,32 +245,32 @@ class DataErichmentWithoutConpanyInfo(models.Model):
     agentsInformation_physical_postal_code = models.TextField(max_length=20,blank=True, null=True)
     agentsInformation_agent_type = models.TextField(blank=True, null=True)
 # Filings Information Records
-    abc_license_type = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_file_number = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_lic_or_app = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_type_status = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_type_orig_iss_date = models.TextField(blank=True, null=True)
-    abc_expir_date = models.TextField(blank=True, null=True)
-    abc_fee_codes = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_dup_counts = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
-    abc_master_ind = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
-    abc_term_in_number_of_months = models.IntegerField(blank=True, null=True)
-    abc_geo_code = models.TextField( blank=True, null=True)
-    abc_district = models.TextField(blank=True, null=True)
-    abc_primary_name = models.TextField(blank=True, null=True)  # Converted to TextField
-    abc_prem_addr_1 = models.TextField(blank=True, null=True)
-    abc_prem_addr_2 = models.TextField(blank=True, null=True)
-    abc_prem_city = models.TextField(blank=True, null=True)
-    abc_prem_state = models.TextField(blank=True, null=True)
-    abc_prem_zip = models.TextField(blank=True, null=True)
-    abc_dba_name = models.TextField( blank=True, null=True)
-    abc_mail_addr_1 = models.TextField(blank=True, null=True)
-    abc_mail_addr_2 = models.TextField( blank=True, null=True)
-    abc_mail_city = models.TextField(blank=True, null=True)  
-    abc_mail_state = models.TextField(blank=True, null=True)
-    abc_mail_zip = models.TextField(blank=True, null=True)
-    abc_prem_county = models.TextField( blank=True, null=True)
-    abc_prem_census_tract = models.TextField( blank=True, null=True)
+    # abc_license_type = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_file_number = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_lic_or_app = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_type_status = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_type_orig_iss_date = models.TextField(blank=True, null=True)
+    # abc_expir_date = models.TextField(blank=True, null=True)
+    # abc_fee_codes = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_dup_counts = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    # abc_master_ind = models.TextField(max_length=10,blank=True, null=True)  # Converted to TextField
+    # abc_term_in_number_of_months = models.IntegerField(blank=True, null=True)
+    # abc_geo_code = models.TextField( blank=True, null=True)
+    # abc_district = models.TextField(blank=True, null=True)
+    # abc_primary_name = models.TextField(blank=True, null=True)  # Converted to TextField
+    # abc_prem_addr_1 = models.TextField(blank=True, null=True)
+    # abc_prem_addr_2 = models.TextField(blank=True, null=True)
+    # abc_prem_city = models.TextField(blank=True, null=True)
+    # abc_prem_state = models.TextField(blank=True, null=True)
+    # abc_prem_zip = models.TextField(blank=True, null=True)
+    # abc_dba_name = models.TextField( blank=True, null=True)
+    # abc_mail_addr_1 = models.TextField(blank=True, null=True)
+    # abc_mail_addr_2 = models.TextField( blank=True, null=True)
+    # abc_mail_city = models.TextField(blank=True, null=True)  
+    # abc_mail_state = models.TextField(blank=True, null=True)
+    # abc_mail_zip = models.TextField(blank=True, null=True)
+    # abc_prem_county = models.TextField( blank=True, null=True)
+    # abc_prem_census_tract = models.TextField( blank=True, null=True)
     filingsInformation_entity_name = models.TextField(blank=True, null=True)
     filingsInformation_entity_num = models.TextField( blank=True, null=True)
     filingsInformation_initial_filing_date = models.TextField(blank=True, null=True)
