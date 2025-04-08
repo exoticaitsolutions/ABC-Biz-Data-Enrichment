@@ -156,14 +156,6 @@ class DataSet2Record(models.Model):
     principalsInformation_state = models.TextField(blank=True, null=True)
     principalsInformation_country = models.TextField(blank=True, null=True)
     principalsInformation_postal_code = models.TextField(max_length=20,blank=True, null=True)
-    
-    # principalsInformation_position_1 = models.TextField(blank=True, null=True)
-    # principalsInformation_position_2 = models.TextField(blank=True, null=True)
-    # principalsInformation_position_3 = models.TextField(blank=True, null=True)
-    # principalsInformation_position_4 = models.TextField(blank=True, null=True)
-    # principalsInformation_position_5 = models.TextField(blank=True, null=True)
-    # principalsInformation_position_6 = models.TextField(blank=True, null=True)
-    # principalsInformation_position_7 = models.TextField(blank=True, null=True)
     # Additional Fields
     filling_information_file_status = models.BooleanField(default=False)
     principal_information_file_status = models.BooleanField(default=False)

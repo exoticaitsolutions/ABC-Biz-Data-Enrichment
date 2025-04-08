@@ -10,6 +10,7 @@ from ABC_BizEnrichment.common.helper_function import return_response
 from django import forms
 from django.contrib import admin,messages
 from django.http import HttpResponseRedirect
+from django.shortcuts import render, redirect
 
 
 
@@ -46,7 +47,7 @@ class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
 
     def process_csv_import(self, request, model_class, field_mappings):
         if request.method != "POST":
-            return return_response(
+            return render(
                 request,
                 "admin/csv_form.html",
                 context={
@@ -56,17 +57,21 @@ class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
                 },
             )
 
+        if "csv_file" not in request.FILES:
+            messages.error(request, "No CSV file uploaded.")
+            return redirect(request.path)
+
         file = request.FILES["csv_file"]
         file_extension = os.path.splitext(file.name)[1].lower()
+
         try:
-            # Step 1: Read file into DataFrame based on file type
             if file_extension == ".csv":
                 df = pd.read_csv(file, engine="python", sep=r"\*\|\*", encoding="utf-8", on_bad_lines="skip")
             elif file_extension in [".xls", ".xlsx"]:
                 df = pd.read_excel(file)
             else:
-                self.message_user(request, f"Unsupported file type: {file_extension}", messages.ERROR)
-                return None
+                messages.error(request, f"Unsupported file type: {file_extension}")
+                return redirect(request.path)
 
             rows = df.to_dict(orient="records")
             total_records = len(rows)
@@ -77,13 +82,12 @@ class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
                     data = {k: field_mappings[k](row) for k in field_mappings}
                     instance = model_class(**data)
                     records_to_create.append(instance)
-
                 except IntegrityError as e:
-                    self.message_user(request, f"Integrity error while importing record: {str(e)}", messages.ERROR)
-                    return None
+                    messages.error(request, f"Integrity error while importing record: {str(e)}")
+                    return redirect(request.path)
                 except Exception as e:
-                    self.message_user(request, f"Error preparing or saving record: {str(e)}", messages.ERROR)
-                    return None
+                    messages.error(request, f"Error preparing or saving record: {str(e)}")
+                    return redirect(request.path)
 
                 if len(records_to_create) >= 1000:
                     model_class.objects.bulk_create(records_to_create)
@@ -92,10 +96,9 @@ class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
             if records_to_create:
                 model_class.objects.bulk_create(records_to_create)
 
-            self.message_user(request, "File imported successfully!", messages.SUCCESS)
+            messages.success(request, "File imported successfully!")
             return HttpResponseRedirect(f"/admin/core_app/{model_class._meta.model_name}/")
-
         except Exception as e:
-            self.message_user(request, f"Error importing file: {str(e)}", messages.ERROR)
-            return None
+            messages.error(request, f"Error importing file: {str(e)}")
+            return redirect(request.path)
         
