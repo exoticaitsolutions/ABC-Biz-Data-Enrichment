@@ -76,18 +76,17 @@ class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
             rows = df.to_dict(orient="records")
             total_records = len(rows)
             records_to_create = []
+            skipped_rows = 0
 
             for row in tqdm(rows, desc="Processing Rows", unit="record", total=total_records):
                 try:
                     data = {k: field_mappings[k](row) for k in field_mappings}
                     instance = model_class(**data)
                     records_to_create.append(instance)
-                except IntegrityError as e:
-                    messages.error(request, f"Integrity error while importing record: {str(e)}")
-                    return redirect(request.path)
                 except Exception as e:
-                    messages.error(request, f"Error preparing or saving record: {str(e)}")
-                    return redirect(request.path)
+                    skipped_rows += 1
+                    print(f"Skipping row due to error: {e}, Row: {row}")
+                    continue
 
                 if len(records_to_create) >= 1000:
                     model_class.objects.bulk_create(records_to_create)
@@ -96,9 +95,10 @@ class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
             if records_to_create:
                 model_class.objects.bulk_create(records_to_create)
 
-            messages.success(request, "File imported successfully!")
+            messages.success(request, f"File imported successfully! Skipped {skipped_rows} rows due to errors.")
             return HttpResponseRedirect(f"/admin/core_app/{model_class._meta.model_name}/")
         except Exception as e:
             messages.error(request, f"Error importing file: {str(e)}")
             return redirect(request.path)
+
         
