@@ -45,7 +45,7 @@ class CSVImportForm(forms.Form):
 
 class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
 
-    def process_csv_import(self, request, model_class, field_mappings):
+    def process_csv_import(self, request, model_class, field_mappings, filter_func=None):
         if request.method != "POST":
             return render(
                 request,
@@ -80,6 +80,9 @@ class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
 
             for row in tqdm(rows, desc="Processing Rows", unit="record", total=total_records):
                 try:
+                    if filter_func and not filter_func(row):
+                        skipped_rows += 1
+                        continue
                     data = {k: field_mappings[k](row) for k in field_mappings}
                     instance = model_class(**data)
                     records_to_create.append(instance)
@@ -95,10 +98,11 @@ class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
             if records_to_create:
                 model_class.objects.bulk_create(records_to_create)
 
-            messages.success(request, f"File imported successfully! Skipped {skipped_rows} rows due to errors.")
+            messages.success(request, f"File imported successfully! Skipped {skipped_rows} rows due to filtering or errors.")
             return HttpResponseRedirect(f"/admin/core_app/{model_class._meta.model_name}/")
         except Exception as e:
             messages.error(request, f"Error importing file: {str(e)}")
             return redirect(request.path)
+
 
         

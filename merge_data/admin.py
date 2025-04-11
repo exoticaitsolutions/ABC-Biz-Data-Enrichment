@@ -76,88 +76,62 @@ class DataSet1RecordAdmin(CustomMergeAdminMixin, admin.ModelAdmin):  # ExportMix
         return MergeDataSet1RecordsAdmin
 
     
-
 @admin.register(DataSet2Record)
 class DataSet2RecordAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
     merge_url_name = "data_set2_records"
-    # search_fields = ("agentsInformation_entity_num","principalsInformation_entity_num")
-    agents_information_all_columns = get_column_names(AgentsInformation, ['id'], include_relations=True)
-    filings_Information_all_columns = get_column_names(FilingsInformation, ['id'], include_relations=True)
-    principalsinformation_all_columns = get_column_names(PrincipalsInformation, ['id'], include_relations=True)
-    # fieldsets = (
-    #     ('Principals Information Record', {
-    #         'classes': ('collapse',),
-    #         'fields': tuple(principalsinformation_all_columns),
-    #     }),
-    #     ('Agents Information Record', {
-    #         'classes': ('collapse',),
-    #         'fields': tuple(agents_information_all_columns),
-    #     }),
-    #     ('Filings Information Record', {
-    #         'classes': ('collapse',),   
-    #         'fields': tuple(filings_Information_all_columns),
-    #     }),
-    #     ('Additional Fields Record', {
-    #         'fields': ('filling_information_file_status', 'principal_information_file_status','agentsInformation_file_status'),
-    #     }),
-    # )
-
-    # list_display = ("id", "principalsInformation_entity_num", "principalsInformation_entity_name", 
-    #                 "principalsInformation_first_name", "principalsInformation_last_name", 
-    #                 "filling_information_file_status", "principal_information_file_status", 
-    #                 "agentsInformation_file_status")
-    # search_fields = ['principalsInformation_entity_name']  # You can add other fields here as needed
-    
     def get_merge_view(self):
         def DataSet2Recordmerge_view(request):
-            full_function_name = get_full_function_name()
-            message = 'Data Merged successfully for Filling, Principal & Agent and saved in the Dataset 2 (Combined Information)'
-            fetch_principalsinformation = PrincipalsInformation.objects.all()
-            total_principalsinformation_count = fetch_principalsinformation.count()        
-            # Fetch all related records in bulk (for faster lookup)
-            agents_info_dict = {ai.agentsInformation_entity_name: ai for ai in AgentsInformation.objects.all()}
-            filings_info_dict = {fi.filingsInformation_entity_name: fi for fi in FilingsInformation.objects.all()}
-            records_to_create = []
-            # Use tqdm for a progress bar while iterating through all the records
-            for principalsinformationdata in tqdm(fetch_principalsinformation, desc="Merging Data", total=total_principalsinformation_count, unit="record"):
-                entity_name = str(principalsinformationdata.principalsInformation_entity_name)                
-                dataset2records = DataSet2Record()
-                
-                # Lookup related records in the dictionaries
-                agent_informations = agents_info_dict.get(entity_name)
-                filingsinformation = filings_info_dict.get(entity_name)
-                # If found in the Agents Information, copy the data to the dataset2records instance
-                if agent_informations:
-                    for column_name in self.agents_information_all_columns:
-                        if hasattr(agent_informations, column_name):
-                            setattr(dataset2records, column_name, getattr(agent_informations, column_name))
-                    dataset2records.agentsInformation_file_status = True
+            print("------match the records --------------")
+            
+            dataset1_records = DataSet1Record.objects.all()
+            
+            count = 0
 
-                # If found in the Filings Information, copy the data to the dataset2records instance
-                if filingsinformation:
-                    for column_name in self.filings_Information_all_columns:
-                        if hasattr(filingsinformation, column_name):
-                            setattr(dataset2records, column_name, getattr(filingsinformation, column_name))
-                    dataset2records.filling_information_file_status = True
+            # for record in dataset1_records:
+            #     license_number = record.abc_license_number
 
-                # Copy principals information data to the dataset2records instance
-                for column_name in self.principalsinformation_all_columns:
-                    if hasattr(principalsinformationdata, column_name):
-                        setattr(dataset2records, column_name, getattr(principalsinformationdata, column_name))
-                dataset2records.principal_information_file_status = True
+            #     filing = FilingsInformation.objects.filter(filingsInformation_entity_num=license_number).first()
+            #     agent = AgentsInformation.objects.filter(agentsInformation_entity_num=license_number).first()
+            #     principal = PrincipalsInformation.objects.filter(principalsInformation_entity_num=license_number).first()
 
-                records_to_create.append(dataset2records)
-                # Bulk insert every 500 records (or another suitable number)
-                if len(records_to_create) >= 500:
-                    DataSet2Record.objects.bulk_create(records_to_create)
-                    records_to_create.clear()
-                    time.sleep(2)  # Optional: delay to avoid overwhelming the database
-            # Bulk save any remaining records after loop finishes
-            if records_to_create:
-                DataSet2Record.objects.bulk_create(records_to_create)
-            self.message_user(request, message, messages.SUCCESS)
-            return HttpResponseRedirect("/admin/merge_data/dataset2record/")  # Redirect after processing
+            #     if any([filing, agent, principal]):
+            #         ds2 = DataSet2Record()
+
+            #         if agent:
+            #             ds2.agentsInformation_entity_name = agent.agentsInformation_entity_name
+            #             ds2.agentsInformation_entity_num = agent.agentsInformation_entity_num
+            #             ds2.agentsInformation_org_name = getattr(agent, 'agentsInformation_org_name', "")
+            #             ds2.agentsInformation_first_name = getattr(agent, 'agentsInformation_first_name', "")
+            #             ds2.agentsInformation_middle_name = getattr(agent, 'agentsInformation_middle_name', "")
+            #             ds2.agentsInformation_last_name = getattr(agent, 'agentsInformation_last_name', "")
+            #             ds2.agentsInformation_physical_address1 = getattr(agent, 'agentsInformation_physical_address1', "")
+            #             ds2.agentsInformation_physical_address2 = getattr(agent, 'agentsInformation_physical_address2', "")
+            #             ds2.agentsInformation_physical_address3 = getattr(agent, 'agentsInformation_physical_address3', "")
+            #             ds2.agentsInformation_physical_city = getattr(agent, 'agentsInformation_physical_city', "")
+            #             ds2.agentsInformation_physical_state = getattr(agent, 'agentsInformation_physical_state', "")
+            #             ds2.agentsInformation_physical_country = getattr(agent, 'agentsInformation_physical_country', "")
+            #             ds2.agentsInformation_physical_postal_code = getattr(agent, 'agentsInformation_physical_postal_code', "")
+            #             ds2.agentsInformation_agent_type = getattr(agent, 'agentsInformation_agent_type', "")
+            #             ds2.agentsInformation_file_status = True
+
+            #         if filing:
+            #             for field in [f.name for f in FilingsInformation._meta.fields]:
+            #                 if hasattr(ds2, field):
+            #                     setattr(ds2, field, getattr(filing, field))
+            #             ds2.filling_information_file_status = True
+
+            #         if principal:
+            #             for field in [f.name for f in PrincipalsInformation._meta.fields]:
+            #                 if hasattr(ds2, field):
+            #                     setattr(ds2, field, getattr(principal, field))
+            #             ds2.principal_information_file_status = True
+
+            #         ds2.save()
+            #         count += 1
+            
         return DataSet2Recordmerge_view
+    
+    
 @admin.register(DataErichmentWithoutConpanyInfo)
 class DataErichmentWithoutConpanyInfoAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
     merge_url_name = "dataerichmentrecordswithout_conpany_info"

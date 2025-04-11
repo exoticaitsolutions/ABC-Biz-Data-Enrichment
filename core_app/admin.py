@@ -1,9 +1,29 @@
+import re
+import ahocorasick
 from django.contrib import admin
 from ABC_BizEnrichment.common.core_app.helper_function import BaseCSVImportAdmin
 from ABC_BizEnrichment.common.helper_function import get_column_names, parse_date, validate_yelp_rating
 from core_app.models import AgentsInformation, CompanyInformationRecord, FilingsInformation, LicenseOutput, PrincipalsInformation, YelpRestaurantRecord
+from merge_data.models import DataSet1Record
 from django.contrib import admin
 from django.db.models import Min
+from django.contrib import messages
+from django.db.models import Value, F, CharField
+from django.db.models.functions import Replace, Lower
+from django.db.models import CharField, Value
+from django.db.models.functions import Lower, Replace, Cast
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+file_handler = logging.FileHandler('import_logs_of_data_set_2.log')
+file_handler.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+if not logger.handlers:
+    logger.addHandler(file_handler)
 # Genrating Data Set 1  Start ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # # Licens eOutput Records 
 @admin.register(LicenseOutput)
@@ -195,17 +215,35 @@ class AgentsInformationAdmin(BaseCSVImportAdmin):
 @admin.register(FilingsInformation)
 class FilingsInformationAdmin(BaseCSVImportAdmin):
     csv_import_url_name = "filingsinformation"
-    # search_fields = ("abc_entity_num","abc__entity_name")
-    list_display = ("id","filingsInformation_entity_num","filingsInformation_entity_name")
-    csv_import_url_name = "filingsinformation" 
-    PrincipalsInformationCoulmne = get_column_names(FilingsInformation,['id'], include_relations=True) # type: ignore
+    list_display = ("id", "filingsInformation_entity_num", "filingsInformation_entity_name")
+    PrincipalsInformationCoulmne = get_column_names(FilingsInformation, ['id'], include_relations=True)  # type: ignore
+
     fieldsets = (
         ('Filings Information Record', {
             'fields': tuple(PrincipalsInformationCoulmne),
         }),
     )
+
     def get_import_view(self):
         def importfilingsinformation(request):
+            def normalize_name(name):
+                # Keep only letters (ignore digits, spaces, special chars), convert to uppercase
+                return re.sub(r'[^A-Z0-9]', '', name.upper())
+
+            print("📦 Preparing dataset...")
+            
+            print(len(DataSet1Record.objects.all()),"--------------->>>>>>>>")
+
+            norm_dataset = [
+                normalize_name(licensee)
+                for licensee in DataSet1Record.objects.values_list('abc_licensee', flat=True)
+                if licensee
+            ]
+
+            print(f"📈 Total licensees to load into automaton: {len(norm_dataset)}")
+
+            match_count = {'matched': 0, 'unmatched': 0}
+
             mappings = {
                 'filingsInformation_entity_name': lambda row: row['ENTITY_NAME'],
                 'filingsInformation_entity_num': lambda row: row['ENTITY_NUM'],
@@ -217,8 +255,7 @@ class FilingsInformationAdmin(BaseCSVImportAdmin):
                 'filingsInformation_filing_type': lambda row: row['FILING_TYPE'],
                 'filingsInformation_foreign_name': lambda row: row['FOREIGN_NAME'],
                 'filingsInformation_standing_ftb': lambda row: row['STANDING_FTB'],
-                'filingsInformation_standing_ftb': lambda row: row['STANDING_VCFCF'],
-                'filingsInformation_standing_vcfcf': lambda row: row['STANDING_AGENT'],
+                'filingsInformation_standing_vcfcf': lambda row: row['STANDING_VCFCF'],
                 'filingsInformation_standing_agent': lambda row: row['STANDING_AGENT'],
                 'filingsInformation_suspension_date': lambda row: row['SUSPENSION_DATE'],
                 'filingsInformation_last_si_file_number': lambda row: row['LAST_SI_FILE_NUMBER'],
@@ -244,6 +281,27 @@ class FilingsInformationAdmin(BaseCSVImportAdmin):
                 'filingsInformation_llc_management_structure': lambda row: row['LLC_MANAGEMENT_STRUCTURE'],
                 'filingsInformation_type_of_business': lambda row: row['TYPE_OF_BUSINESS'],
             }
-            return self.process_csv_import(request, FilingsInformation, mappings)
+
+            def filter_func(row):
+                raw_name = row.get('ENTITY_NAME', '')
+                normalized_entity = normalize_name(raw_name)
+
+                if normalized_entity in norm_dataset:
+                    match_count['matched'] += 1
+                    print(f"✅ MATCHED: ENTITY_NAME = '{raw_name}'")
+                    return True
+                else:
+                    match_count['unmatched'] += 1
+                    print(f"❌ UNMATCHED: ENTITY_NAME = '{raw_name}'")
+                    return False
+
+            print("🚀 Starting CSV Import with Automaton Matching...")
+            result = self.process_csv_import(request, FilingsInformation, mappings, filter_func=filter_func)
+            print("🏁 Import Summary")
+            print(f"✅ Matched: {match_count['matched']}")
+            print(f"❌ Unmatched: {match_count['unmatched']}")
+            print("===========================================")
+            return result
+
         return importfilingsinformation
 # # Genrating Data Set 2  End ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
