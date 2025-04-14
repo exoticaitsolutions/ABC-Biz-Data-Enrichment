@@ -149,12 +149,6 @@ class PrincipalsInformationAdmin(BaseCSVImportAdmin):
                 'principalsInformation_country': lambda row: row['COUNTRY'],
                 'principalsInformation_postal_code': lambda row: row['POSTAL_CODE'],
                 'principalsInformation_position_type': lambda row: row['POSITION_TYPE'],
-                # 'principalsInformation_position_2': lambda row: row['POSITION2'],
-                # 'principalsInformation_position_3': lambda row: row['POSITION3'],
-                # 'principalsInformation_position_4': lambda row: row['POSITION4'],
-                # 'principalsInformation_position_5': lambda row: row['POSITION5'],
-                # 'principalsInformation_position_6': lambda row: row['POSITION6'],
-                # 'principalsInformation_position_7': lambda row: row['POSITION7'],
             }
             return self.process_csv_import(request, PrincipalsInformation, mappings)
         return importprincipalsinformation

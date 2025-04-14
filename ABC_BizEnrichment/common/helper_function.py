@@ -1,11 +1,15 @@
 from datetime import datetime
 import inspect
 from io import TextIOWrapper
+import re
 from django.db.models import Model
 from django.apps import apps
 from django.db import models
 
 from django.template.response import TemplateResponse
+def normalize_name(name):
+    # Keep only letters (ignore digits, spaces, special chars), convert to uppercase
+    return re.sub(r'[^A-Z]', '', name.upper())
 def get_full_function_name():
     """Returns the full class and function name for logging."""
     frame = inspect.currentframe().f_back

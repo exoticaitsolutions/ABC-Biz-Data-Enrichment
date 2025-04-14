@@ -148,5 +148,4 @@ class FilingsInformation(models.Model):
     filingsInformation_type_of_business = models.TextField( blank=True, null=True)
     def __str__(self):
         return f"Filings Information Records : {self.filingsInformation_entity_num} - {self.filingsInformation_entity_num}"
-        
 # Model for Generating Data Set 2 End ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

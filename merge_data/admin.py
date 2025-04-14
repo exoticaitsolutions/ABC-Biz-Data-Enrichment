@@ -112,47 +112,51 @@ class DataSet2RecordAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
         def DataSet2Recordmerge_view(request):
             full_function_name = get_full_function_name()
             message = 'Data Merged successfully for Filling, Principal & Agent and saved in the Dataset 2 (Combined Information)'
-            fetch_principalsinformation = PrincipalsInformation.objects.all()
-            total_principalsinformation_count = fetch_principalsinformation.count()        
+            fetch_filingsinformation = FilingsInformation.objects.all()
+            total_filingsinformation_count = fetch_filingsinformation.count()
+            logger.debug(f"{full_function_name}: total number of Filings Information data: {total_filingsinformation_count}")
             # Fetch all related records in bulk (for faster lookup)
             agents_info_dict = {ai.agentsInformation_entity_name: ai for ai in AgentsInformation.objects.all()}
-            filings_info_dict = {fi.filingsInformation_entity_name: fi for fi in FilingsInformation.objects.all()}
+            principal_info_dict = {fi.principalsInformation_entity_name: fi for fi in PrincipalsInformation.objects.all()}
             records_to_create = []
             # Use tqdm for a progress bar while iterating through all the records
-            for principalsinformationdata in tqdm(fetch_principalsinformation, desc="Merging Data", total=total_principalsinformation_count, unit="record"):
-                entity_name = str(principalsinformationdata.principalsInformation_entity_name)                
+            for filingsinformationdata in tqdm(fetch_filingsinformation, desc="Merging Data", total=total_filingsinformation_count, unit="record"):
+                entity_name = str(filingsinformationdata.filingsInformation_entity_name)                
                 dataset2records = DataSet2Record()
-                
                 # Lookup related records in the dictionaries
                 agent_informations = agents_info_dict.get(entity_name)
-                filingsinformation = filings_info_dict.get(entity_name)
+                principalsinformation = principal_info_dict.get(entity_name)
+
                 # If found in the Agents Information, copy the data to the dataset2records instance
                 if agent_informations:
                     for column_name in self.agents_information_all_columns:
                         if hasattr(agent_informations, column_name):
                             setattr(dataset2records, column_name, getattr(agent_informations, column_name))
+                    # Copy filings information data to the dataset2records instance
+                    for column_name in self.filings_Information_all_columns:
+                        if hasattr(filingsinformationdata, column_name):
+                            setattr(dataset2records, column_name, getattr(filingsinformationdata, column_name))
+                    dataset2records.filling_information_file_status = True
                     dataset2records.agentsInformation_file_status = True
 
-                # If found in the Filings Information, copy the data to the dataset2records instance
-                if filingsinformation:
+                # If found in the Principals Information, copy the data to the dataset2records instance
+                if principalsinformation:
+                    for column_name in self.principalsinformation_all_columns:
+                        if hasattr(principalsinformation, column_name):
+                            setattr(dataset2records, column_name, getattr(principalsinformation, column_name))
+                    dataset2records.principal_information_file_status = True
+                    # Copy filings information data to the dataset2records instance
                     for column_name in self.filings_Information_all_columns:
-                        if hasattr(filingsinformation, column_name):
-                            setattr(dataset2records, column_name, getattr(filingsinformation, column_name))
+                        if hasattr(filingsinformationdata, column_name):
+                            setattr(dataset2records, column_name, getattr(filingsinformationdata, column_name))
                     dataset2records.filling_information_file_status = True
-
-                # Copy principals information data to the dataset2records instance
-                for column_name in self.principalsinformation_all_columns:
-                    if hasattr(principalsinformationdata, column_name):
-                        setattr(dataset2records, column_name, getattr(principalsinformationdata, column_name))
-                dataset2records.principal_information_file_status = True
 
                 records_to_create.append(dataset2records)
                 # Bulk insert every 500 records (or another suitable number)
                 if len(records_to_create) >= 500:
                     DataSet2Record.objects.bulk_create(records_to_create)
                     records_to_create.clear()
-                    time.sleep(2)  # Optional: delay to avoid overwhelming the database
-            # Bulk save any remaining records after loop finishes
+                    time.sleep(2)
             if records_to_create:
                 DataSet2Record.objects.bulk_create(records_to_create)
             self.message_user(request, message, messages.SUCCESS)
@@ -212,13 +216,11 @@ class DataErichmentWithoutConpanyInfoAdmin(CustomMergeAdminMixin, admin.ModelAdm
                 s.normalized_name: [] for s in norm_second
             }
             for s in norm_second:
-                second_lookup[s.normalized_name].append(s)
-
+                second_lookup[s.normalized_name].append(s)  
             with tqdm(total=total_batches, desc="Merging", unit="batch") as pbar:
                 for i in range(0, total, batch_size):
                     batch = norm_first[i:i + batch_size]
                     to_create = []
-
                     for f in batch:
                         norm_name = str(f.normalized_name)
                         if norm_name:
@@ -242,12 +244,10 @@ class DataErichmentWithoutConpanyInfoAdmin(CustomMergeAdminMixin, admin.ModelAdm
                                         setattr(merged, c, getattr(f, c))
                                 merged.data_set_1_file_status = True
                                 to_create.append(merged)
-
                     if to_create:
                         DataErichmentWithoutConpanyInfo.objects.bulk_create(to_create, batch_size=batch_size)
                         time.sleep(2)
                     pbar.update(1)
-
             logger.info(f"{full_function_name}: Done merging {total} records.")
             self.message_user(request, message, messages.SUCCESS)
             return HttpResponseRedirect("/admin/merge_data/dataerichmentwithoutconpanyinfo/")

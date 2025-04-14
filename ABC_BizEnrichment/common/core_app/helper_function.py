@@ -41,7 +41,12 @@ class CSVImportAdminMixin:
 
 
 class CSVImportForm(forms.Form):
-    csv_file = forms.FileField(label="Upload CSV File", required=True)
+    csv_file = forms.FileField(
+        label="Upload CSV/Excel Files",
+        required=True,
+        # attrs={'multiple': True}
+        # multiple=True,
+    )
 
 class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
 
@@ -57,48 +62,61 @@ class BaseCSVImportAdmin(CSVImportAdminMixin, admin.ModelAdmin):
                 },
             )
 
-        if "csv_file" not in request.FILES:
-            messages.error(request, "No CSV file uploaded.")
+        # Support multiple files
+        uploaded_files = request.FILES.getlist("csv_file")
+        if not uploaded_files:
+            messages.error(request, "No CSV or Excel files uploaded.")
             return redirect(request.path)
 
-        file = request.FILES["csv_file"]
-        file_extension = os.path.splitext(file.name)[1].lower()
+        total_skipped_rows = 0
+        total_records_created = 0
 
         try:
-            if file_extension == ".csv":
-                df = pd.read_csv(file, engine="python", sep=r"\*\|\*", encoding="utf-8", on_bad_lines="skip")
-            elif file_extension in [".xls", ".xlsx"]:
-                df = pd.read_excel(file)
-            else:
-                messages.error(request, f"Unsupported file type: {file_extension}")
-                return redirect(request.path)
+            for file in uploaded_files:
+                file_extension = os.path.splitext(file.name)[1].lower()
 
-            rows = df.to_dict(orient="records")
-            total_records = len(rows)
-            records_to_create = []
-            skipped_rows = 0
-
-            for row in tqdm(rows, desc="Processing Rows", unit="record", total=total_records):
-                try:
-                    data = {k: field_mappings[k](row) for k in field_mappings}
-                    instance = model_class(**data)
-                    records_to_create.append(instance)
-                except Exception as e:
-                    skipped_rows += 1
-                    print(f"Skipping row due to error: {e}, Row: {row}")
+                # Read the file into a DataFrame
+                if file_extension == ".csv":
+                    df = pd.read_csv(file, engine="python", sep=r"\*\|\*", encoding="utf-8", on_bad_lines="skip")
+                elif file_extension in [".xls", ".xlsx"]:
+                    df = pd.read_excel(file)
+                else:
+                    messages.warning(request, f"Unsupported file type skipped: {file.name}")
                     continue
 
-                if len(records_to_create) >= 1000:
+                rows = df.to_dict(orient="records")
+                total_records = len(rows)
+                records_to_create = []
+                skipped_rows = 0
+                for row in tqdm(rows, desc=f"Processing {file.name}", unit="record", total=total_records):
+                    try:
+                        data = {k: field_mappings[k](row) for k in field_mappings}
+                        instance = model_class(**data)
+                        records_to_create.append(instance)
+                    except Exception as e:
+                        skipped_rows += 1
+                        print(f"Skipping row due to error: {e}, Row: {row}")
+                        continue
+
+                    if len(records_to_create) >= 10000:
+                        model_class.objects.bulk_create(records_to_create)
+                        total_records_created += len(records_to_create)
+                        records_to_create.clear()
+
+                if records_to_create:
                     model_class.objects.bulk_create(records_to_create)
-                    records_to_create.clear()
+                    total_records_created += len(records_to_create)
 
-            if records_to_create:
-                model_class.objects.bulk_create(records_to_create)
+                total_skipped_rows += skipped_rows
 
-            messages.success(request, f"File imported successfully! Skipped {skipped_rows} rows due to errors.")
-            return HttpResponseRedirect(f"/admin/core_app/{model_class._meta.model_name}/")
+            messages.success(
+                request,
+                f"Files imported successfully! {total_records_created} records created. "
+                f"Skipped {total_skipped_rows} rows due to errors."
+            )
+            return HttpResponseRedirect(f"/admin/core_app/{model_class._meta.model_name}")
         except Exception as e:
-            messages.error(request, f"Error importing file: {str(e)}")
+            messages.error(request, f"Error importing files: {str(e)}")
             return redirect(request.path)
 
         
