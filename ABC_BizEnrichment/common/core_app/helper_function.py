@@ -37,9 +37,6 @@ class CSVImportAdminMixin:
         extra_context[f"{self.csv_import_url_name}_csv_url"] = f"admin:{self.csv_import_url_name}_csv"
         return super().changelist_view(request, extra_context=extra_context)
     
-
-
-
 class CSVImportForm(forms.Form):
     csv_file = forms.FileField(
         label="Upload CSV/Excel Files",
