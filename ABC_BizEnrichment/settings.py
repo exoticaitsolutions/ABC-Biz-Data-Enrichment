@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     "merge_data",
     'django_extensions',
     'import_export',
-    'yelprecords'
+    'FinalRecords'
 ]
 
 MIDDLEWARE = [

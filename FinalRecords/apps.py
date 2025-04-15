@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class YelprecordsConfig(AppConfig):
+class FinalrecordsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'yelprecords'
+    name = 'FinalRecords'

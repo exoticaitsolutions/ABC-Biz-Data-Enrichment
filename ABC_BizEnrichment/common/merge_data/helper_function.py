@@ -18,6 +18,7 @@ class CustomMergeAdminMixin:
                  self.get_merge_view(), 
                  name=self.merge_url_name),
         ]
+        print(f"Custom URL for {self.merge_url_name} added.")
         return custom_urls + urls
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}

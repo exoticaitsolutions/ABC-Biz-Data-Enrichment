@@ -1,10 +1,6 @@
 from django.db import models
-
 # Create your models here.
 from django.db import models
-
-
-
 class BusinessLocationLicense(models.Model):
     # ABC License Information
     abc_license_number = models.TextField(blank=True, null=True)  # Converted to TextField
