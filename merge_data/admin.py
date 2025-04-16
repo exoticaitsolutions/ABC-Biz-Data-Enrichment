@@ -19,7 +19,6 @@ class DataSet1RecordAdmin(CustomMergeAdminMixin, admin.ModelAdmin):  # ExportMix
     search_fields = ['abc_license_number', 'yelp_file_number', "abc_licensee", "yelp_primary_name"]
     list_display = ("id", "abc_license_number", "yelp_file_number", "abc_licensee", "yelp_primary_name", 
                     "output_license_file_status", "yelp_file_status")
-    
     license_output_all_columns = get_column_names(LicenseOutput, ['id'], include_relations=True)
     yelp_output_all_columns = get_column_names(YelpRestaurantRecord, ['id'], include_relations=True)
     def get_merge_view(self):
@@ -27,45 +26,42 @@ class DataSet1RecordAdmin(CustomMergeAdminMixin, admin.ModelAdmin):  # ExportMix
             full_function_name = get_full_function_name()
             message = 'Data Merged successfully for LicenseOutput & AbcBizYelpRestaurantData and saved in the Dataset 1 (Business License)'
             
-            license_output_qs = YelpRestaurantRecord.objects.all()
+            license_output_qs = LicenseOutput.objects.all()
             total_license_count = license_output_qs.count()
             dataset1_records_to_create = []
             logger.debug(f"{full_function_name}: total number of Yelp Restaurant Records data: {total_license_count}")
 
-            # Fetch all LicenseOutput records at once and create a dictionary for fast lookup
-            license_outputs_dict = {lo.abc_license_number: lo for lo in LicenseOutput.objects.all()}
+            # # Fetch all LicenseOutput records at once and create a dictionary for fast lookup
+            yelp_dict = {lo.yelp_file_number: lo for lo in YelpRestaurantRecord.objects.all()}
 
             # Use tqdm for a progress bar while iterating through all the records
             for batch_license_output_data in tqdm(license_output_qs, desc="Merging Data", total=total_license_count, unit="record"):
                 dataset1records = DataSet1Record()
-                license_number = batch_license_output_data.yelp_file_number                    
-                yelp_output = license_outputs_dict.get(license_number)
-
+                license_number = batch_license_output_data.abc_license_number                    
+                yelp_output = yelp_dict.get(license_number)
                 if yelp_output:
-                    logger.debug(f'Found == {license_number}')
-                    for column_nameq in self.license_output_all_columns:
+                    logger.debug(f'Found in the yelp Records == {license_number}')
+                    for column_nameq in self.yelp_output_all_columns:
                         if hasattr(yelp_output, column_nameq):
                             setattr(dataset1records, column_nameq, getattr(yelp_output, column_nameq))
-                    dataset1records.output_license_file_status = True
-                    
-                    for column_name in self.yelp_output_all_columns:
+                    dataset1records.yelp_file_status = True
+                    for column_name in self.license_output_all_columns:
                         if hasattr(batch_license_output_data, column_name):
                             setattr(dataset1records, column_name, getattr(batch_license_output_data, column_name))
-                    dataset1records.yelp_file_status = True
+                    dataset1records.output_license_file_status = True
                 else:
-                    logger.debug(f'Not Found == {license_number}')
-                    for column_name in self.yelp_output_all_columns:
+                    logger.debug(f'Not Found in the yelp == {license_number}')
+                    for column_name in self.license_output_all_columns:
                             if hasattr(batch_license_output_data, column_name):
                                 setattr(dataset1records, column_name, getattr(batch_license_output_data, column_name))
                     dataset1records.output_license_file_status = False
-                    dataset1records.yelp_file_status = True
+                    dataset1records.output_license_file_status = True
                     # Collect the records for bulk creation
                 dataset1_records_to_create.append(dataset1records)
                 # Save in bulk after processing every 500 records (or another suitable batch size)
                 if len(dataset1_records_to_create) >= 500:
                     DataSet1Record.objects.bulk_create(dataset1_records_to_create)
                     dataset1_records_to_create = []  # Clear the list after bulk create
-
             # Bulk save any remaining records
             if dataset1_records_to_create:
                 DataSet1Record.objects.bulk_create(dataset1_records_to_create)

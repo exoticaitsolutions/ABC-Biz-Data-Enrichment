@@ -8,8 +8,36 @@ from django.db import models
 
 from django.template.response import TemplateResponse
 def normalize_name(name):
-    # Keep only letters (ignore digits, spaces, special chars), convert to uppercase
-    return re.sub(r'[^A-Z]', '', name.upper())
+    if not name:
+        return ''
+    name = name.upper().strip()
+    # Remove special characters but keep letters, digits, and spaces
+    return re.sub(r'[^A-Z0-9]', '', name)
+
+
+def convert_to_int_str(value):
+    # Check if the value is a float
+    if isinstance(value, float):
+        value = int(value)  # Convert float to integer
+
+    # Check if the value is a string that can be converted to a number
+    elif isinstance(value, str):
+        try:
+            # Try converting string to float, then to int
+            value = int(float(value))  # This will handle strings like '1369351.0' and '1369351'
+        except ValueError:
+            return value  # If it's not a valid number, return the original string
+
+    # If it's already an integer, just proceed
+    elif isinstance(value, int):
+        pass  # Already an int, so we don't need to do anything
+    
+    # Convert the final value to string
+    return str(value)  # Convert the integer to string
+    
+
+
+
 def get_full_function_name():
     """Returns the full class and function name for logging."""
     frame = inspect.currentframe().f_back
