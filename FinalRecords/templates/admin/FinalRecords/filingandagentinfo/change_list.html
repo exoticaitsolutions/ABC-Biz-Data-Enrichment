@@ -1,0 +1,17 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools %}
+{{ block.super }}
+<style>
+    .new_class {
+        background-color: #747474;
+        color: white;
+        padding: 7px 17px;
+        text-decoration: none;
+        margin: -47px 240px 0 0;
+    }
+    </style>
+<div class="object-tools">
+    <a href="{% url filingandagentinfo_url %}" class="button new_class"
+        style="">Sync Data</a>
+</div>
+{% endblock %}
