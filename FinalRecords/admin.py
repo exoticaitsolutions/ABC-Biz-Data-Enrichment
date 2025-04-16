@@ -118,18 +118,15 @@ class EntityABCLicenseMappingAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
             # Step 1: Build normalized licensee name map with full objects
             licensee_qs = DataSet1Record.objects.exclude(abc_licensee__isnull=True).exclude(abc_licensee__exact='')
             normalized_licensee_map = defaultdict(list)
-
             for lic in licensee_qs:
                 normalized = normalize_name(lic.abc_licensee)
                 normalized_licensee_map[normalized].append(lic)
-
             filings_qs = FilingsInformation.objects.exclude(filingsInformation_entity_name__isnull=True).exclude(filingsInformation_entity_name__exact='')
             counter = 1
             matched_count = 0
             unmatched_count = 0
             total_matched_licensees = 0
             unmatched_filings = []  # To store unmatched filings for CSV export
-            
             # Step 2: Use bulk_create for batch insertion
             def insert_matched_records(filing_obj, licensee_objects,status):
                 new_data = [
@@ -228,7 +225,7 @@ class FilingAndPrincipalInfoAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
                 principal_matches = normalized_principal_map.get(filing_enatity_num, [])
                 # principal_matches = PrincipalsInformation.objects.filter(principalsInformation_entity_num=filing_enatity_num)
                 if principal_matches:
-                    # insert_matched__pricipal_records(filing, principal_matches , True)
+                    insert_matched__pricipal_records(filing, principal_matches , True)
                     matched_count += 1
                     match_count = len(principal_matches)
                     total_matched_principal += match_count # ✅ Accumulate the count
@@ -384,7 +381,7 @@ class FilingAndAgentInfoAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
                 filing_entity_num = convert_to_int_str(filing.filingsInformation_entity_num)
                 agent_matches = normalized_agent_map.get(filing_entity_num, [])
                 if agent_matches:
-                    # insert_matched_agent_records(filing, agent_matches)
+                    insert_matched_agent_records(filing, agent_matches)
                     matched_count += 1
                     match_count = len(agent_matches)
                     total_matched_principal += match_count
