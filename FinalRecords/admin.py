@@ -348,7 +348,7 @@ class FilingAndAgentInfoAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
         return FilingAndAgentInfomerge_view
 
 
-@admin.register(EntityABCLicenseMapping)
+@admin.register(EntityABCLicenseMapping) #Mapping Report in the Multiple CSV Genrate 
 class EntityABCLicenseMappingAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
     merge_url_name = "entityabclicensemapping"
     list_display = ("id", "Entity_Table_ID_id", "ABC_Licennse_ID_id", "created_at", "updated_at")
@@ -390,7 +390,7 @@ class EntityABCLicenseMappingAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
                 except ValueError:
                     continue
             License_mappiung = []
-            output_folder = 'output_files'
+            output_folder = 'Mike Final Data'
             os.makedirs(output_folder, exist_ok=True)
             for index, row in df.iterrows():
                 Entity_Table_ID_id = row['Entity_Table_ID_id'] 
@@ -440,24 +440,24 @@ class EntityABCLicenseMappingAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
                 # print(f"normalized: {normalized}")
                 # break
             output_filling_dataMap = pd.DataFrame(output_filling_data) 
-            output_filling_dataMap.to_csv('output_files/Filling_Data.csv', index=False)
+            output_filling_dataMap.to_csv(f'{output_folder}/Company_Entity_Table_Fillings.csv', index=False)
 
             # ABC Licensee File Genrating 
             pd_lincnec_mapping = pd.DataFrame(License_mappiung) 
-            pd_lincnec_mapping.to_csv('output_files/Entity ABC License Mappings.csv', index=False)
+            pd_lincnec_mapping.to_csv(f'{output_folder}/Entity_ABC_License_Mapping_Table.csv', index=False)
             output_abc_data_dataMap = pd.DataFrame(output_abc_data_data) 
-            output_abc_data_dataMap.to_csv('output_files/DataSet1.csv', index=False)
+            output_abc_data_dataMap.to_csv(f'{output_folder}/ABC_Lincense_Table.csv', index=False)
 
             # Principal Mapping File Genrating
             pd_principal_mapping = pd.DataFrame(License_Pricipal)
-            pd_principal_mapping.to_csv('output_files/Entity Principal Mappings.csv', index=False)
+            pd_principal_mapping.to_csv(f'{output_folder}/Entity_Principal_Mapping_Table.csv', index=False)
             output_pricipal_dataMap = pd.DataFrame(output_pricipal_data)
-            output_pricipal_dataMap.to_csv('output_files/PrincipalData.csv', index=False)
+            output_pricipal_dataMap.to_csv(f'{output_folder}/Principals_Table(Unique-).csv', index=False)
             # output_df = pd.DataFrame(output_abc_data_data)
             pd_License_agent_mapping = pd.DataFrame(License_agent)   
-            pd_License_agent_mapping.to_csv('output_files/Entity Agent Mappings.csv', index=False) 
+            pd_License_agent_mapping.to_csv(f'{output_folder}Entity_Agent_Mapping_Table.csv', index=False) 
             output_output_agent_data_dataMap = pd.DataFrame(output_agent_data)
-            output_output_agent_data_dataMap.to_csv('output_files/AgentData.csv', index=False)
+            output_output_agent_data_dataMap.to_csv(f'{output_folder}/Agent_Table.csv', index=False)
             # output_df.to_csv('output_abc_data_data.csv', index=False)
             message = 'Data Merged successfully for Filing, Principal & Agent and saved in BusinessLocationLicense.'
             self.message_user(request, message, messages.SUCCESS)
