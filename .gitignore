@@ -53,6 +53,5 @@ docker-compose.override.yml
 core_app/migrations/*
 merge_data/migrations/*
 db.sqlite3_back_up/
-*.csv
 db.sqlite3-journal
 *.zip
