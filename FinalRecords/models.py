@@ -284,3 +284,4 @@ class EntityAgentMapping(models.Model):
         # No unique constraints, allowing duplicates
     def __str__(self):
         return f"Entity Mapping (Entity ID: {self.Entity_Table_ID_id}, Agent Info ID: {self.Agent_ID_id})"        
+  

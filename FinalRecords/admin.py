@@ -1,17 +1,19 @@
+from concurrent.futures import ThreadPoolExecutor
 import csv
+import os
+from django.db import transaction
 from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.contrib import admin,messages
+import pandas as pd
 from tqdm import tqdm
-from ABC_BizEnrichment.common.helper_function import convert_to_int_str, get_column_names, get_full_function_name, normalize_name
+from ABC_BizEnrichment.common.helper_function import get_column_names, get_full_function_name, normalize_name
 from ABC_BizEnrichment.common.merge_data.helper_function import CustomMergeAdminMixin
 from FinalRecords.models import BusinessLocationLicense, EntityABCLicenseMapping, EntityAgentMapping, EntityPrincipalMapping, FilingAndAgentInfo, FilingAndPrincipalInfo
 from core_app.models import AgentsInformation, FilingsInformation, PrincipalsInformation
 from merge_data.models import DataSet1Record
 from collections import defaultdict
 from django.apps import apps
-from ABC_BizEnrichment.common.logconfig import logger
-import re
 # Register your models here.
 
 # Assuming CustomMergeAdminMixin and other necessary imports are done
@@ -27,14 +29,15 @@ class BusinessLocationLicenseAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
             print('----------start------------------')
             print(len(FilingsInformation.objects.all()), "Filings total")
             print(len(DataSet1Record.objects.all()), "Licensee total")
+            
             # Step 1: Build normalized licensee name map with full objects
             licensee_qs = DataSet1Record.objects.exclude(abc_licensee__isnull=True).exclude(abc_licensee__exact='')
             normalized_licensee_map = defaultdict(list)
-
             for lic in licensee_qs:
                 normalized = normalize_name(lic.abc_licensee)
                 normalized_licensee_map[normalized].append(lic)
-            filings_qs = FilingsInformation.objects.exclude(filingsInformation_entity_name__isnull=True).exclude(filingsInformation_entity_name__exact='')
+            
+            filings_qs = FilingsInformation.objects.exclude(filingsInformation_entity_num__isnull=True).exclude(filingsInformation_entity_num__exact='')
             unique_filings_dict = {}
             for filing in filings_qs:
                 try:
@@ -45,17 +48,14 @@ class BusinessLocationLicenseAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
                     continue
             unique_filings = list(unique_filings_dict.values())
 
-            counter = 1
             matched_count = 0
             unmatched_count = 0
             total_matched_licensees = 0
             unmatched_filings = []  # To store unmatched filings for CSV export
-            
-            # Step 2: Use bulk_create for batch insertion
-            def insert_matched_records(filing_obj, licensee_objects,status):
+
+            def insert_matched_records(filing_obj, licensee_objects, status):
                 BusinessLocationLicense = apps.get_model('FinalRecords', 'BusinessLocationLicense')
                 valid_fields = set(f.name for f in BusinessLocationLicense._meta.get_fields())
-                # Collect data to insert in bulk
                 to_create = []
                 new_data = [
                     EntityABCLicenseMapping(
@@ -64,7 +64,8 @@ class BusinessLocationLicenseAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
                     )
                     for lic in licensee_objects
                 ]
-                EntityABCLicenseMapping.objects.bulk_create(new_data, batch_size=500)
+                EntityABCLicenseMapping.objects.bulk_create(new_data, batch_size=100)
+                
                 for lic in licensee_objects:
                     licensee_data = {
                         col: getattr(lic, col)
@@ -81,59 +82,58 @@ class BusinessLocationLicenseAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
                     filing_data['filling_information_file_status'] = status
                     combined_data = {**filing_data, **licensee_data}
                     to_create.append(BusinessLocationLicense(**combined_data))
-                # Bulk insert the records
-                BusinessLocationLicense.objects.bulk_create(to_create)
+                
+                # Bulk insert in batches
+                with transaction.atomic():
+                    for i in range(0, len(to_create), 100):
+                        BusinessLocationLicense.objects.bulk_create(to_create[i:i+100])
 
-            # Step 3: Use tqdm for progress bar
-            for filing in tqdm(unique_filings, desc="Matching Unique Filings with Abc Lincencee", unit="filing"):
+            # Step 2: Parallel Processing with ThreadPoolExecutor
+            def match_filing(filing):
+                nonlocal matched_count, unmatched_count, total_matched_licensees
                 filing_name = filing.filingsInformation_entity_name
                 normalized = normalize_name(filing_name)
                 licensee_matches = normalized_licensee_map.get(normalized, [])
+                
                 if licensee_matches:
-                    insert_matched_records(filing, licensee_matches , True)
+                    insert_matched_records(filing, licensee_matches, True)
                     matched_count += 1
-                    match_count = len(licensee_matches)
-                    total_matched_licensees += match_count # ✅ Accumulate the count
+                    total_matched_licensees += len(licensee_matches)
                 else:
                     unmatched_count += 1
-                    # insert_matched_records(filing, licensee_matches , False)
                     unmatched_filings.append({
                         'filing_id': filing.id,
                         'filings_entity_num': filing.filingsInformation_entity_num,
                         'filing_name': filing.filingsInformation_entity_name,
                         'status': 'Unmatched'
                     })
-                counter += 1
-            # Step 4: Summary
+
+            # Using ThreadPoolExecutor for parallel matching
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                list(tqdm(executor.map(match_filing, unique_filings), total=len(unique_filings), desc="Matching filings"))
+
+            # Step 3: Export unmatched filings
             if unmatched_filings:
                 with open('unmatched_filings.csv', mode='w', newline='', encoding='utf-8') as file:
                     writer = csv.DictWriter(file, fieldnames=['filing_id', 'filings_entity_num', 'filing_name', 'status'])
                     writer.writeheader()
                     writer.writerows(unmatched_filings)
                 print(f"Unmatched filings saved to unmatched_filings.csv")
-            print("\n--- Summary for the Filling and Data Set 1 ---")
+
+            # Summary Output
+            print(f"\n--- Summary ---")
             print(f"🧾 Total Unique Filings: {len(unique_filings)}")
-            print(f'Total Number of the Records In the Data Set 1  : {len(DataSet1Record.objects.all())}')
-            print(f"✅ Total Matched Filings search on teh based of the data set 1 : {matched_count}")
-            print(f"❌ Total Matched Filings search on teh based of the data set 1: {unmatched_count}")
-            print(f"🔢 Total Licensee Matches Found and insert int the new Table : {total_matched_licensees}")
+            print(f"✅ Total Matched: {matched_count}")
+            print(f"❌ Total Unmatched: {unmatched_count}")
+            print(f"🔢 Total Licensee Matches Found: {total_matched_licensees}")
+            
             message = 'Data Merged successfully for Filing, Principal & Agent and saved in BusinessLocationLicense.'
             self.message_user(request, message, messages.SUCCESS)
             return HttpResponseRedirect("/admin/FinalRecords/businesslocationlicense/")
+        
         return BusinessLocationLicensemerge_view
     
-@admin.register(EntityABCLicenseMapping)
-class EntityABCLicenseMappingAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
-    merge_url_name = "entityabclicensemapping"
-    list_display = ("id", "ABC_Licennse_ID_id", "Entity_Table_ID_id", "created_at", "updated_at")
-    dataSet1_all_columns = get_column_names(DataSet1Record, ['id'], include_relations=True)
-    filings_Information_all_columns = get_column_names(FilingsInformation, ['id'], include_relations=True)
-    def get_merge_view(self):
-        def EntityABCLicenseMappingmerge_view(request):
-            message = 'Data Merged successfully for Filing, Principal & Agent and saved in BusinessLocationLicense.'
-            self.message_user(request, message, messages.SUCCESS)
-            return HttpResponseRedirect("/admin/FinalRecords/entityabclicensemapping/")
-        return EntityABCLicenseMappingmerge_view
+
     
 
 
@@ -236,22 +236,6 @@ class FilingAndPrincipalInfoAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
             return HttpResponseRedirect("/admin/FinalRecords/filingandprincipalinfo/")
         return FilingAndPrincipalInfomerge_view
     
-
-@admin.register(EntityPrincipalMapping)
-class EntityPrincipalMappingAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
-    merge_url_name = "entityprincipalmapping"
-    list_display = ("id", "Entity_Table_ID_id", "Principal_ID_id", "created_at", "updated_at")
-    principalsinformation_all_columns = get_column_names(PrincipalsInformation, ['id'], include_relations=True)
-    filings_Information_all_columns = get_column_names(FilingsInformation, ['id'], include_relations=True)
-    def get_merge_view(self):
-        def entity_principal_mapping_merge_view(request):
-            full_function_name = get_full_function_name()
-            print('---------- Start Merge Process ------------------')
-            message = 'Data merged successfully for Filings and Principals and saved in EntityPrincipalMapping.'
-            self.message_user(request, message, messages.SUCCESS)
-            return HttpResponseRedirect("/admin/FinalRecords/entityprincipalmapping/")
-        return entity_principal_mapping_merge_view
-
 
 @admin.register(FilingAndAgentInfo)
 class FilingAndAgentInfoAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
@@ -362,18 +346,120 @@ class FilingAndAgentInfoAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
             return HttpResponseRedirect("/admin/FinalRecords/filingandagentinfo/")
 
         return FilingAndAgentInfomerge_view
-    
 
-@admin.register(EntityAgentMapping)
-class EntityAgentMappingAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
-    merge_url_name = "entityagentmapping"
-    list_display = ("id", "Entity_Table_ID_id", "Agent_ID","created_at","updated_at")
-    agent_columns = get_column_names(AgentsInformation, ['id'], include_relations=True)
-    filings_columns = get_column_names(FilingsInformation, ['id'], include_relations=True)
+
+@admin.register(EntityABCLicenseMapping)
+class EntityABCLicenseMappingAdmin(CustomMergeAdminMixin, admin.ModelAdmin):
+    merge_url_name = "entityabclicensemapping"
+    list_display = ("id", "Entity_Table_ID_id", "ABC_Licennse_ID_id", "created_at", "updated_at")
     def get_merge_view(self):
-        def EntityAgentMappingmerge_view(request):
-            print('----------start------------------')
-            message = 'Data merged successfully for Filings with Agents in the Filing and Agent Information.'
+        def EntityABCLicenseMappingmerge_view(request):
+            df = pd.read_csv('finalrecords_entityabclicensemapping_Unique.csv')
+            output_filling_data = []
+            output_abc_data_data = []
+            License_agent = []
+            output_agent_data = []
+            License_Pricipal = []
+            output_pricipal_data= []
+            licensee_qs = DataSet1Record.objects.exclude(abc_licensee__isnull=True).exclude(abc_licensee__exact='')
+            normalized_licensee_map = defaultdict(list)
+            for lic in licensee_qs:
+                normalized = normalize_name(lic.abc_licensee)
+                normalized_licensee_map[normalized].append(lic)
+
+            # Build normalized principal name map with full objects
+            principal_qs = PrincipalsInformation.objects.all()
+            normalized_principal_map = defaultdict(list)
+            for lic in principal_qs:
+                normalized = float(lic.principalsInformation_entity_num)
+                normalized_principal_map[normalized].append(lic)
+            agent_qs = AgentsInformation.objects.exclude(
+                agentsInformation_entity_num__isnull=True
+            ).exclude(
+                agentsInformation_entity_num__exact=''
+            )
+
+            # Create a defaultdict for agent entity numbers mapped to agent objects
+            agents_map = defaultdict(list)
+            for agent in agent_qs:
+                try:
+                    # Normalize to integer
+                    float_entity_num = float(agent.agentsInformation_entity_num)
+                    int_entity_num = int(float_entity_num)
+                    agents_map[int_entity_num].append(agent)
+                except ValueError:
+                    continue
+            License_mappiung = []
+            output_folder = 'output_files'
+            os.makedirs(output_folder, exist_ok=True)
+            for index, row in df.iterrows():
+                Entity_Table_ID_id = row['Entity_Table_ID_id'] 
+                print(f"Processing row {index + 1}: Entity_Table_ID_id={Entity_Table_ID_id}")
+                filings_qs = FilingsInformation.objects.get(id=Entity_Table_ID_id)
+                filing_name = filings_qs.filingsInformation_entity_name
+                normalized = normalize_name(filing_name)
+                try:
+                    filing_float = float(filings_qs.filingsInformation_entity_num)
+                except ValueError:
+                    continue
+                filings_qs_data = {field.name: getattr(filings_qs, field.name) for field in filings_qs._meta.fields}
+                output_filling_data.append(filings_qs_data)
+                # Abc Licensee Mapping
+                licensee_matches = normalized_licensee_map.get(normalized, [])
+                if licensee_matches:
+                    for licensee in licensee_matches:
+                        new_data = {
+                            'Entity_Table_ID(Filling ID)': filings_qs.id,
+                            'ABC_Licennse_ID': licensee.id
+                        }
+                        License_mappiung.append(new_data)
+                        data_record_data = {field.name: getattr(licensee, field.name) for field in licensee._meta.fields}
+                        output_abc_data_data.append(data_record_data)
+                # Pricipal Mapping
+                principal_matches = normalized_principal_map.get(filing_float, [])
+                if principal_matches:
+                    for principal in principal_matches:
+                        new_data = {
+                            'Entity_Table_ID(Filling ID)': filings_qs.id,
+                            'Principal_ID_id': principal.id
+                        }
+                        License_Pricipal.append(new_data)
+                        data_principal_REC = {field.name: getattr(principal, field.name) for field in principal._meta.fields}
+                        output_pricipal_data.append(data_principal_REC)
+                # Agent Mapping
+                agent_matches = agents_map.get(filing_float, [])
+                if agent_matches:
+                    for agent in agent_matches:
+                        new_data = {
+                            'Entity_Table_ID(Filling ID)': filings_qs.id,
+                            'Agent_ID': agent.id
+                        }
+                        License_agent.append(new_data)
+                        data_Agent_data = {field.name: getattr(agent, field.name) for field in agent._meta.fields}
+                        output_agent_data.append(data_Agent_data)
+                # print(f"normalized: {normalized}")
+                # break
+            output_filling_dataMap = pd.DataFrame(output_filling_data) 
+            output_filling_dataMap.to_csv('output_files/Filling_Data.csv', index=False)
+
+            # ABC Licensee File Genrating 
+            pd_lincnec_mapping = pd.DataFrame(License_mappiung) 
+            pd_lincnec_mapping.to_csv('output_files/Entity ABC License Mappings.csv', index=False)
+            output_abc_data_dataMap = pd.DataFrame(output_abc_data_data) 
+            output_abc_data_dataMap.to_csv('output_files/DataSet1.csv', index=False)
+
+            # Principal Mapping File Genrating
+            pd_principal_mapping = pd.DataFrame(License_Pricipal)
+            pd_principal_mapping.to_csv('output_files/Entity Principal Mappings.csv', index=False)
+            output_pricipal_dataMap = pd.DataFrame(output_pricipal_data)
+            output_pricipal_dataMap.to_csv('output_files/PrincipalData.csv', index=False)
+            # output_df = pd.DataFrame(output_abc_data_data)
+            pd_License_agent_mapping = pd.DataFrame(License_agent)   
+            pd_License_agent_mapping.to_csv('output_files/Entity Agent Mappings.csv', index=False) 
+            output_output_agent_data_dataMap = pd.DataFrame(output_agent_data)
+            output_output_agent_data_dataMap.to_csv('output_files/AgentData.csv', index=False)
+            # output_df.to_csv('output_abc_data_data.csv', index=False)
+            message = 'Data Merged successfully for Filing, Principal & Agent and saved in BusinessLocationLicense.'
             self.message_user(request, message, messages.SUCCESS)
-            return HttpResponseRedirect("/admin/FinalRecords/entityagentmapping/")
-        return EntityAgentMappingmerge_view
+            return HttpResponseRedirect("/admin/FinalRecords/entityabclicensemapping/")
+        return EntityABCLicenseMappingmerge_view
